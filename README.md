@@ -2,7 +2,9 @@
 
 > Turn your Raspberry Pi Zero W into a lightweight home server — with deployment scripts, process management, and a real-time monitoring dashboard.
 
-![PiZoW Monitor Dashboard](screenshot/Screenshot%202026-02-21%20at%206.25.57%20PM.png)
+<a href="screenshot/web.png">
+  <img src="screenshot/web.png" width="600" alt="PiZoW Monitor Dashboard" />
+</a>
 
 ---
 
@@ -22,9 +24,24 @@ The included **Next.js example** doubles as a fully functional **monitoring dash
 
 The `examples/nextjs` app is a production-ready monitoring dashboard — responsive and mobile friendly. Deploy it to your Pi and access it from any browser or phone on your network.
 
-| Desktop | Mobile |
-|---------|--------|
-| ![Desktop dashboard](screenshot/Screenshot%202026-02-21%20at%206.25.57%20PM.png) | ![Mobile dashboard](screenshot/Screenshot_20260221_185655_Chrome.jpg) |
+<table>
+  <tr>
+    <th>Desktop</th>
+    <th>Mobile</th>
+  </tr>
+  <tr>
+    <td>
+      <a href="screenshot/web.png">
+        <img src="screenshot/web.png" width="420" alt="Desktop dashboard" />
+      </a>
+    </td>
+    <td>
+      <a href="screenshot/mobile.jpg">
+        <img src="screenshot/mobile.jpg" width="160" alt="Mobile dashboard" />
+      </a>
+    </td>
+  </tr>
+</table>
 
 **What it shows:**
 - Temperature, Memory %, CPU %, Disk % — at a glance
