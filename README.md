@@ -2,6 +2,14 @@
 
 > Turn your Raspberry Pi Zero W into a lightweight home server — with deployment scripts, process management, and a real-time monitoring dashboard.
 
+![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-C51A4A?style=for-the-badge&logo=Raspberry-Pi&logoColor=white)
+![Node](https://img.shields.io/badge/Node-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
+![PM2](https://img.shields.io/badge/PM2-2B037A?style=for-the-badge&logo=pm2&logoColor=white)
+![Nginx](https://img.shields.io/badge/Nginx-009639?style=for-the-badge&logo=nginx&logoColor=white)
+![Shell Script](https://img.shields.io/badge/Shell_Script-121011?style=for-the-badge&logo=gnu-bash&logoColor=white)
+![Ubuntu](https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
+
 <table>
   <tr>
     <td><a href="screenshot/web.png"><img src="screenshot/web.png" height="280" alt="Desktop" /></a></td>
@@ -35,27 +43,18 @@ Use [Raspberry Pi Imager](https://www.raspberrypi.com/software/):
 - Configure WiFi
 - Set locale
 
-**OS: Any Debian-based Linux** (Ubuntu, Raspberry Pi OS, etc.)
+**OS: Ubuntu Server 24.04 LTS (recommended)**
 
-> This project was built and tested on **[Ubuntu 24.04.4 LTS (Noble Numbat)](https://ubuntu.com/download/raspberry-pi)** on a Raspberry Pi Zero 2 W. Any Debian-based OS should work — Ubuntu and Raspberry Pi OS Lite are both good choices.
->
-> Download Ubuntu for Raspberry Pi: [ubuntu.com/download/raspberry-pi](https://ubuntu.com/download/raspberry-pi)
+> Built and tested on **[Ubuntu Server 24.04.4 LTS (Noble Numbat)](https://ubuntu.com/download/raspberry-pi)** on a Raspberry Pi Zero 2 W. Any Debian-based OS works — Ubuntu Server and Raspberry Pi OS Lite are both good choices. Choose the **server** (headless) variant, not desktop.
 
-### 2. SSH into Your Pi
+### 2. SSH into Your Pi & Set Up Key Auth
 
 ```bash
 ssh YOUR_USERNAME@YOUR_PI_IP
+ssh-copy-id YOUR_USERNAME@YOUR_PI_IP   # recommended — enables passwordless deploys
 ```
 
-### 2a. (Recommended) Set Up SSH Key Auth
-
-After first login, copy your key to the Pi so you never need a password again. The deploy scripts will use it automatically.
-
-```bash
-ssh-copy-id YOUR_USERNAME@YOUR_PI_IP
-```
-
-> **Why:** `PI_PASSWORD` in `.env` is only needed for the first-time `setup-pi.sh` run. Once your SSH key is installed, you can remove it from `.env`. All subsequent deploys use key auth.
+> `PI_PASSWORD` in `.env` is only needed for the first `setup-pi.sh` run. Once your SSH key is installed you can remove it — all subsequent deploys use key auth.
 
 ### 3. Run the Setup Script
 
@@ -73,7 +72,7 @@ cd pizow
 ./scripts/setup-pi.sh
 ```
 
-This installs Node.js 20, PM2, Nginx, and configures 1 GB swap (essential for Pi Zero).
+This installs Node.js 22, PM2, Nginx, and configures 1 GB swap (essential for Pi Zero).
 
 ### 4. Configure Your Environment
 
@@ -151,7 +150,7 @@ pizow/
 
 Run once on a fresh Pi. Installs and configures everything:
 
-- Node.js 20.x
+- Node.js 22.x
 - PM2 (process manager with autostart)
 - Nginx (reverse proxy)
 - 1 GB swap file
@@ -171,16 +170,13 @@ Run once on a fresh Pi. Installs and configures everything:
 ### `manage.sh`
 
 ```bash
-./scripts/manage.sh list                          # List running apps and ports
-./scripts/manage.sh stop 3000                     # Gracefully stop app on port
-./scripts/manage.sh kill 3000                     # Force kill
-./scripts/manage.sh remove /home/user/myapp       # Stop and delete project
-./scripts/manage.sh logs                          # View default logs
-./scripts/manage.sh logs /tmp/myapp.log           # View specific log
-./scripts/manage.sh restart /home/user/myapp 3000 # Restart app
-./scripts/manage.sh services status               # List systemd services
-./scripts/manage.sh services stop myservice       # Stop a systemd service
-./scripts/manage.sh services start myservice      # Start a systemd service
+./scripts/manage.sh list                    # List running apps and ports
+./scripts/manage.sh stop 3000               # Gracefully stop app on port
+./scripts/manage.sh kill 3000               # Force kill
+./scripts/manage.sh remove /home/user/myapp # Stop and delete project
+./scripts/manage.sh logs                    # View logs
+./scripts/manage.sh restart /path 3000      # Restart app
+./scripts/manage.sh services status         # List systemd services
 ```
 
 ### `nginx-setup.sh`
@@ -333,7 +329,7 @@ vcgencmd measure_temp
 - Raspberry Pi Zero W or Zero 2 W
 - Any Debian-based OS on the Pi (tested on **[Ubuntu 24.04.4 LTS](https://ubuntu.com/download/raspberry-pi)**)
 - macOS or Linux on your development machine
-- Node.js 18+ locally (for building)
+- Node.js 22+ locally (for building)
 - SSH access to your Pi
 
 ---

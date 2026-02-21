@@ -95,7 +95,7 @@ print_error() {
 
 # Configuration
 TOTAL_STEPS=8
-NODE_VERSION="20"
+NODE_VERSION="22"
 SWAP_SIZE="1G"
 
 print_header
