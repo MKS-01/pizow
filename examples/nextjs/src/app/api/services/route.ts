@@ -17,6 +17,8 @@ interface ListeningPort {
   address: string
   process: string
   pid: number | null
+  connections: number
+  pm2Name: string | null
 }
 
 interface Pm2Process {
@@ -49,12 +51,36 @@ export interface ServicesData {
   nodeProcesses: NodeProcess[]
 }
 
-async function getListeningPorts(): Promise<ListeningPort[]> {
-  const output = await runCommand('ss -tlnp')
-  if (!output) return []
+async function getEstablishedConnectionsPerPort(): Promise<Map<number, number>> {
+  // ss -tn columns: State Recv-Q Send-Q Local:Port Peer:Port
+  const output = await runCommand('ss -tn')
+  const counts = new Map<number, number>()
+  if (!output) return counts
+
+  for (const line of output.split('\n')) {
+    if (!line.startsWith('ESTAB')) continue
+    const cols = line.trim().split(/\s+/)
+    if (cols.length < 4) continue
+    // Local address is col index 3
+    const localAddr = cols[3]
+    const colonIdx = localAddr.lastIndexOf(':')
+    if (colonIdx === -1) continue
+    const port = parseInt(localAddr.slice(colonIdx + 1))
+    if (!isNaN(port)) counts.set(port, (counts.get(port) ?? 0) + 1)
+  }
+
+  return counts
+}
+
+async function getListeningPorts(pm2ByPid: Map<number, string>): Promise<ListeningPort[]> {
+  const [ssOutput, connCounts] = await Promise.all([
+    runCommand('ss -tlnp'),
+    getEstablishedConnectionsPerPort(),
+  ])
+  if (!ssOutput) return []
 
   const ports: ListeningPort[] = []
-  const lines = output.split('\n').slice(1) // skip header
+  const lines = ssOutput.split('\n').slice(1) // skip header
 
   for (const line of lines) {
     if (!line.startsWith('LISTEN')) continue
@@ -72,7 +98,9 @@ async function getListeningPorts(): Promise<ListeningPort[]> {
     const processName = processMatch ? processMatch[1] : 'unknown'
     const pid = processMatch ? parseInt(processMatch[2]) : null
 
-    ports.push({ port, address, process: processName, pid })
+    const pm2Name = pid ? (pm2ByPid.get(pid) ?? null) : null
+
+    ports.push({ port, address, process: processName, pid, connections: connCounts.get(port) ?? 0, pm2Name })
   }
 
   return ports
@@ -156,12 +184,19 @@ async function getNodeProcesses(): Promise<NodeProcess[]> {
 
 export async function GET() {
   try {
-    const [ports, pm2Result, systemdResult, nodeProcesses] = await Promise.all([
-      getListeningPorts(),
+    const [pm2Result, systemdResult, nodeProcesses] = await Promise.all([
       getPm2Processes(),
       getSystemdServices(),
       getNodeProcesses()
     ])
+
+    // Build pid→pm2Name map so ports can resolve project names
+    const pm2ByPid = new Map<number, string>()
+    for (const p of pm2Result.processes) {
+      if (p.pid) pm2ByPid.set(p.pid, p.name)
+    }
+
+    const ports = await getListeningPorts(pm2ByPid)
 
     const data: ServicesData = {
       timestamp: new Date().toISOString(),

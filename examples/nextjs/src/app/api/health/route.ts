@@ -4,6 +4,10 @@ import { readFile } from 'fs/promises'
 
 const execAsync = promisify(exec)
 
+// Track active viewers: map of sessionId -> last seen timestamp
+const activeViewers = new Map<string, number>()
+const VIEWER_TTL_MS = 35000 // 35s — clients poll every 5s, so 7 missed = gone
+
 async function runCommand(cmd: string): Promise<string> {
   try {
     const { stdout } = await execAsync(cmd)
@@ -141,7 +145,17 @@ async function getNodeProcesses() {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  // Track active viewers by session ID from header
+  const sessionId = new URL(request.url).searchParams.get('sid')
+  if (sessionId) {
+    activeViewers.set(sessionId, Date.now())
+    // Prune stale viewers
+    for (const [id, ts] of activeViewers) {
+      if (Date.now() - ts > VIEWER_TTL_MS) activeViewers.delete(id)
+    }
+  }
+
   const [temperature, memory, disk, cpu, uptime, hostname, ip, nodeProcesses] = await Promise.all([
     getTemperature(),
     getMemory(),
@@ -169,7 +183,8 @@ export async function GET() {
     cpu,
     processes: {
       node: nodeProcesses
-    }
+    },
+    viewers: activeViewers.size
   }
 
   return Response.json(data)

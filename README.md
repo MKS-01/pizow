@@ -2,9 +2,12 @@
 
 > Turn your Raspberry Pi Zero W into a lightweight home server — with deployment scripts, process management, and a real-time monitoring dashboard.
 
-<a href="screenshot/web.png">
-  <img src="screenshot/web.png" width="600" alt="PiZoW Monitor Dashboard" />
-</a>
+<table>
+  <tr>
+    <td><a href="screenshot/web.png"><img src="screenshot/web.png" height="280" alt="Desktop" /></a></td>
+    <td><a href="screenshot/mobile.jpg"><img src="screenshot/mobile.jpg" height="280" alt="Mobile" /></a></td>
+  </tr>
+</table>
 
 ---
 
@@ -17,41 +20,6 @@ PiZoW is a collection of shell scripts and a ready-to-use example project that m
 - **Monitor** your Pi in real time with a beautiful dashboard
 
 The included **Next.js example** doubles as a fully functional **monitoring dashboard** for your Pi home server — showing CPU, memory, disk, temperature, uptime, and all running services in a single-page view. It's both a demo project and something you'll actually want to keep running.
-
----
-
-## Live Dashboard Preview
-
-The `examples/nextjs` app is a production-ready monitoring dashboard — responsive and mobile friendly. Deploy it to your Pi and access it from any browser or phone on your network.
-
-<table>
-  <tr>
-    <th>Desktop</th>
-    <th>Mobile</th>
-  </tr>
-  <tr>
-    <td>
-      <a href="screenshot/web.png">
-        <img src="screenshot/web.png" width="420" alt="Desktop dashboard" />
-      </a>
-    </td>
-    <td>
-      <a href="screenshot/mobile.jpg">
-        <img src="screenshot/mobile.jpg" width="160" alt="Mobile dashboard" />
-      </a>
-    </td>
-  </tr>
-</table>
-
-**What it shows:**
-- Temperature, Memory %, CPU %, Disk % — at a glance
-- All running services: PM2 processes, open ports, systemd units, Node.js processes
-- System info: IP (masked by default, click to reveal), uptime, platform, Node version
-- CPU load averages (1m / 5m / 15m) and core count
-- RAM and Swap usage with visual progress bars
-- Disk usage and free space
-- Auto-refreshes every 5 seconds
-- Responsive — works on desktop and mobile
 
 ---
 
@@ -229,15 +197,18 @@ Prints CPU temp, memory, disk, and uptime. Useful for quick SSH checks.
 
 ### Next.js Monitoring Dashboard (`examples/nextjs`)
 
-A real-time Pi monitoring dashboard — the same one shown in the screenshot above.
+A real-time Pi monitoring dashboard with auto-refresh, live TCP traffic, IP masking, and mobile support. Deploy it as your Pi's home page and always know what's running.
 
-- Single-page layout, no scrolling
-- Auto-refreshes every 5 seconds
-- IP address masked by default (click to reveal)
-- Expand toggle when services overflow
-- Works on mobile
-
-Deploy it as your Pi's home page and always know what's running.
+**Dashboard features:**
+- Temperature, Memory %, CPU %, Disk % at a glance
+- All running services: PM2 processes, open ports, systemd units, Node.js processes
+- System info: IP partially masked by default (first octet visible, click to reveal), uptime, platform
+- CPU load averages (1m / 5m / 15m) and core count
+- RAM, Swap, and Disk usage with visual progress bars
+- Live Traffic card — TCP established connections per service, with manual refresh button
+- Active viewer count tracked per browser session (TTL: 35s, updates every 5s)
+- Auto-refreshes every 5s (health) and 15s (services)
+- Mobile responsive
 
 ### Node.js API (`examples/node-api`)
 
