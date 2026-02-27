@@ -8,6 +8,9 @@ const execAsync = promisify(exec)
 const activeViewers = new Map<string, number>()
 const VIEWER_TTL_MS = 35000 // 35s — clients poll every 5s, so 7 missed = gone
 
+// Network throughput: track previous sample to compute bytes/sec delta
+let prevNet: { rx: number; tx: number; ts: number } | null = null
+
 async function runCommand(cmd: string): Promise<string> {
   try {
     const { stdout } = await execAsync(cmd)
@@ -79,6 +82,52 @@ async function getDisk() {
       available: parts[3],
       percent: parseInt(parts[4])
     }
+  } catch {
+    return null
+  }
+}
+
+async function getNas() {
+  try {
+    const mounted = await runCommand('mountpoint -q /mnt/nas && echo yes || echo no')
+    if (mounted.trim() !== 'yes') return null
+    const df = await runCommand('df -h /mnt/nas | tail -1')
+    const parts = df.split(/\s+/)
+    return {
+      total: parts[1],
+      used: parts[2],
+      available: parts[3],
+      percent: parseInt(parts[4])
+    }
+  } catch {
+    return null
+  }
+}
+
+async function getNetwork() {
+  try {
+    // Read /proc/net/dev — cumulative rx/tx bytes per interface
+    const netdev = await readFile('/proc/net/dev', 'utf-8')
+    let rx = 0, tx = 0
+    for (const line of netdev.split('\n')) {
+      const parts = line.trim().split(/\s+/)
+      const iface = parts[0]?.replace(':', '')
+      // Skip loopback and header lines
+      if (!iface || iface === 'lo' || iface === 'Inter' || iface === 'face') continue
+      rx += parseInt(parts[1]) || 0
+      tx += parseInt(parts[9]) || 0
+    }
+    const now = Date.now()
+    let rxSec = 0, txSec = 0
+    if (prevNet) {
+      const dt = (now - prevNet.ts) / 1000
+      if (dt > 0) {
+        rxSec = Math.max(0, (rx - prevNet.rx) / dt)
+        txSec = Math.max(0, (tx - prevNet.tx) / dt)
+      }
+    }
+    prevNet = { rx, tx, ts: now }
+    return { rxBps: Math.round(rxSec), txBps: Math.round(txSec) }
   } catch {
     return null
   }
@@ -156,10 +205,12 @@ export async function GET(request: Request) {
     }
   }
 
-  const [temperature, memory, disk, cpu, uptime, hostname, ip, nodeProcesses] = await Promise.all([
+  const [temperature, memory, disk, nas, network, cpu, uptime, hostname, ip, nodeProcesses] = await Promise.all([
     getTemperature(),
     getMemory(),
     getDisk(),
+    getNas(),
+    getNetwork(),
     getCpu(),
     getUptime(),
     getHostname(),
@@ -180,6 +231,8 @@ export async function GET(request: Request) {
     temperature,
     memory,
     disk,
+    nas,
+    network,
     cpu,
     processes: {
       node: nodeProcesses

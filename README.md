@@ -27,7 +27,7 @@ PiZoW is a collection of shell scripts and a ready-to-use example project that m
 - **Deploy** any Node.js app (Next.js, Express, Fastify, etc.) from your local machine
 - **Monitor** your Pi in real time with a beautiful dashboard
 
-The included **Next.js example** doubles as a fully functional **monitoring dashboard** for your Pi home server — showing CPU, memory, disk, temperature, uptime, and all running services in a single-page view. It's both a demo project and something you'll actually want to keep running.
+The included **Next.js example** doubles as a fully functional **monitoring dashboard** for your Pi home server — showing CPU, memory, disk, temperature, network throughput, NAS storage, uptime, and all running services in a single-page view. It's both a demo project and something you'll actually want to keep running.
 
 ---
 
@@ -45,7 +45,11 @@ Use [Raspberry Pi Imager](https://www.raspberrypi.com/software/):
 
 **OS: Ubuntu Server 24.04 LTS (recommended)**
 
-> Built and tested on **[Ubuntu Server 24.04.4 LTS (Noble Numbat)](https://ubuntu.com/download/raspberry-pi)** on a Raspberry Pi Zero 2 W. Any Debian-based OS works — Ubuntu Server and Raspberry Pi OS Lite are both good choices. Choose the **server** (headless) variant, not desktop.
+> **Built and tested on a Raspberry Pi Zero 2 W** running Ubuntu Server 24.04.4 LTS. All scripts are written to work on any Raspberry Pi model (Zero, Zero 2 W, 3, 4, 5) and any Debian-based OS.
+>
+> **Recommended OS: Ubuntu Server 24.04 LTS** — it has the best out-of-the-box support for Node.js, systemd, NFS, and package availability. Raspberry Pi OS Lite works too but may require extra steps for some packages. Always choose the **server (headless)** variant — no desktop needed.
+>
+> The NAS setup uses the USB OTG port which is specific to Pi Zero models. On Pi 3/4/5, connect your drive to any regular USB port — power limits are much higher so HDDs work fine.
 
 ### 2. SSH into Your Pi & Set Up Key Auth
 
@@ -130,6 +134,8 @@ Then open `http://YOUR_PI_IP` in any browser on your network.
 pizow/
 ├── scripts/
 │   ├── setup-pi.sh          # One-time Pi setup (Node, PM2, Nginx, swap)
+│   ├── setup-nas.sh         # NAS setup (ext4, NFS, File Browser, udev auto-remount)
+│   ├── reset-nas.sh         # Wipe all NAS components for a fresh setup
 │   ├── deploy.sh            # Deploy via local rsync or git pull
 │   ├── deploy-standalone.sh # Build locally + rsync prebuilt output
 │   ├── nginx-setup.sh       # Configure Nginx reverse proxy
@@ -154,6 +160,85 @@ Run once on a fresh Pi. Installs and configures everything:
 - PM2 (process manager with autostart)
 - Nginx (reverse proxy)
 - 1 GB swap file
+
+### `setup-nas.sh`
+
+Turns your Pi into a NAS using a USB pendrive.
+
+```bash
+# Run from your Mac (auto-forwards to Pi via SSH)
+./scripts/setup-nas.sh
+
+# Or run directly on the Pi
+./scripts/setup-nas.sh --local
+```
+
+**What it does:**
+
+| Component | Details |
+|-----------|---------|
+| Format | ext4 — full Linux permissions and ownership support |
+| Mount | Auto-mounts at `/mnt/nas` on every boot via `/etc/fstab` |
+| Auto-remount | udev rule re-mounts automatically when pendrive is plugged in |
+| NFS server | Network share — mount on Mac/Linux as a network drive |
+| File Browser | Web UI at `http://PI_IP:8080` — browse, upload, download |
+| Dashboard | NAS usage card + network throughput shown in monitoring dashboard |
+
+**Step-by-step what the script does:**
+
+1. **Detect USB drive** — scans for USB block devices (`lsblk -rno NAME,TYPE,TRAN`), picks the first one. Fails clearly if nothing is found.
+2. **Install packages** — `e2fsprogs` (ext4 tools), `nfs-kernel-server`, `curl`
+3. **Format as ext4** — wipes the drive, creates a GPT partition table, formats as ext4 with label `pizow-nas`. Skips if already mounted.
+4. **Auto-mount via fstab** — reads the UUID with `blkid`, adds an entry to `/etc/fstab` so the drive mounts at `/mnt/nas` on every boot. Creates default folders: `media/`, `docs/`, `backup/`.
+5. **NFS server** — exports `/mnt/nas` to your local subnet (`192.168.1.0/24` by default, edit `NFS_SUBNET` in the script). Enables and starts `nfs-kernel-server`.
+6. **File Browser** — downloads the File Browser binary for your Pi's architecture (arm64 for Pi Zero 2 W, armv7 for original Pi Zero). Configures it with `/mnt/nas` as root, creates an admin user, installs as a systemd service.
+7. **NAS stats API** — a minimal bash HTTP server on port 8081 returning drive stats as JSON, used by the monitoring dashboard.
+8. **udev auto-remount rule** — installs `/etc/udev/rules.d/99-pizow-nas.rules` so the drive auto-remounts when plugged in after boot.
+
+**Hardware requirements:**
+- USB OTG adapter (Micro-USB → USB-A) — required for Pi Zero
+- **Use a pendrive (flash drive), not a spinning HDD** — see power note below
+- Pendrive must be connected and visible (`lsblk` shows a USB disk) before running
+
+> **⚠️ Power / HDD Warning**
+>
+> The Pi Zero's USB OTG port provides **~500mA at 5V** — enough for a flash drive, but **not enough for a 2.5" spinning hard drive** (which typically draws 700–1000mA at spin-up). Plugging in an HDD may cause:
+> - The drive to not spin up at all (not detected by `lsblk`)
+> - The Pi to brown-out and reboot
+> - Intermittent disconnects under load
+>
+> **Use a pendrive.** If you need large storage with an HDD, use a **powered USB hub** between the Pi and the drive.
+
+**Mount behavior:**
+- Pi boots with pendrive plugged in → auto-mounts via fstab ✓
+- Pi boots without pendrive → boots fine, `/mnt/nas` stays empty (`nofail`) ✓
+- Plug in pendrive after boot → udev rule auto-remounts within seconds ✓
+
+**Connect from Mac:**
+```bash
+# NFS
+sudo mkdir -p /Volumes/pizow-nas
+sudo mount -t nfs PI_IP:/mnt/nas /Volumes/pizow-nas
+
+# Or via Finder: Go → Connect to Server → nfs://PI_IP/mnt/nas
+```
+
+**Connect from Linux:**
+```bash
+sudo mount -t nfs PI_IP:/mnt/nas /mnt/pizow-nas
+```
+
+> **Default File Browser credentials:** `admin` / `pizow123456789` — change after first login at `http://PI_IP:8080`
+
+### `reset-nas.sh`
+
+Wipes all NAS components so you can run `setup-nas.sh` fresh. **Does not delete data on the USB drive itself.**
+
+```bash
+./scripts/reset-nas.sh
+```
+
+Removes: File Browser service + binary + db, NAS stats API service, NFS exports, fstab entry, mount point, udev rule.
 
 ### `deploy.sh`
 
@@ -198,9 +283,11 @@ A real-time Pi monitoring dashboard with auto-refresh, live TCP traffic, IP mask
 **Dashboard features:**
 - Temperature, Memory %, CPU %, Disk % at a glance
 - All running services: PM2 processes, open ports, systemd units, Node.js processes
-- System info: IP partially masked by default (first octet visible, click to reveal), uptime, platform
+- System info: IP partially masked by default (click to reveal), uptime, platform
 - CPU load averages (1m / 5m / 15m) and core count
 - RAM, Swap, and Disk usage with visual progress bars
+- **NAS card** — shows pendrive usage, free space, "Browse Files" button (only when mounted)
+- **Network throughput** — live ↓ Download / ↑ Upload across all interfaces (wlan0, eth0), updates every 5s
 - Live Traffic card — TCP established connections per service, with manual refresh button
 - Active viewer count tracked per browser session (TTL: 35s, updates every 5s)
 - Auto-refreshes every 5s (health) and 15s (services)
@@ -244,6 +331,27 @@ Browser
 ---
 
 ## Useful Commands on the Pi
+
+### NAS
+
+```bash
+# Check mount status
+mountpoint /mnt/nas && df -h /mnt/nas
+
+# Manually mount/unmount
+sudo mount -a                      # mount everything in fstab
+sudo umount /mnt/nas               # unmount pendrive safely
+
+# NFS
+sudo exportfs -v                   # show active NFS exports
+sudo systemctl status nfs-kernel-server
+
+# File Browser
+sudo systemctl status filebrowser
+sudo journalctl -u filebrowser -f  # live logs
+```
+
+### General
 
 ```bash
 # PM2
@@ -322,11 +430,47 @@ vcgencmd measure_temp
 # Over 80°C? Add a heatsink or reduce workload
 ```
 
+### NAS Not Showing in Dashboard
+
+The NAS card only appears when `/mnt/nas` is mounted. Check:
+
+```bash
+mountpoint /mnt/nas    # is it mounted?
+lsblk                  # is the pendrive detected?
+sudo mount -a          # try mounting from fstab manually
+```
+
+### NAS Won't Auto-Remount After Plug
+
+Verify the udev rule and drive label:
+
+```bash
+sudo blkid /dev/sda1              # check LABEL= matches "pizow-nas"
+ls /etc/udev/rules.d/99-pizow-nas.rules   # rule exists?
+sudo udevadm control --reload-rules
+```
+
+### File Browser 403 / Can't Upload
+
+```bash
+sudo systemctl status filebrowser
+# Check it's running with the right root:
+sudo journalctl -u filebrowser -n 30
+```
+
+If config is wrong, stop the service and reinitialize:
+
+```bash
+sudo systemctl stop filebrowser
+filebrowser config set --database /opt/filebrowser/filebrowser.db --root /mnt/nas
+sudo systemctl start filebrowser
+```
+
 ---
 
 ## Requirements
 
-- Raspberry Pi Zero W or Zero 2 W
+- **Any Raspberry Pi** — Zero W, Zero 2 W, 3, 4, 5 (built and tested on Pi Zero 2 W)
 - Any Debian-based OS on the Pi (tested on **[Ubuntu 24.04.4 LTS](https://ubuntu.com/download/raspberry-pi)**)
 - macOS or Linux on your development machine
 - Node.js 22+ locally (for building)

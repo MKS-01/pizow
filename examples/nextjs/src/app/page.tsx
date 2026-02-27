@@ -40,6 +40,16 @@ interface HealthData {
     available: string
     percent: number
   } | null
+  nas: {
+    total: string
+    used: string
+    available: string
+    percent: number
+  } | null
+  network: {
+    rxBps: number
+    txBps: number
+  } | null
   cpu: {
     cores: number
     load: { load1: number; load5: number; load15: number }
@@ -88,11 +98,16 @@ function ProgressBar({ percent, color = 'green' }: { percent: number; color?: st
 }
 
 
-function Metric({ label, value, unit, onClick, clickable }: { label: string; value: string | number; unit?: string; onClick?: () => void; clickable?: boolean }) {
+function Metric({ label, value, unit, onMouseDown, onMouseUp, onMouseLeave, onTouchStart, onTouchEnd, clickable }: { label: string; value: string | number; unit?: string; onMouseDown?: () => void; onMouseUp?: () => void; onMouseLeave?: () => void; onTouchStart?: () => void; onTouchEnd?: () => void; clickable?: boolean }) {
   return (
     <div className="flex justify-between items-center py-2 border-b border-zinc-800 last:border-0">
       <span className="text-zinc-500 text-xs">{label}</span>
-      <span className={`font-mono text-xs text-zinc-300 ${clickable ? 'cursor-pointer select-none' : ''}`} onClick={onClick} title={clickable ? 'Click to toggle' : undefined}>
+      <span
+        className={`font-mono text-xs text-zinc-300 ${clickable ? 'cursor-pointer select-none' : ''}`}
+        onMouseDown={onMouseDown} onMouseUp={onMouseUp} onMouseLeave={onMouseLeave}
+        onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}
+        title={clickable ? 'Hold to reveal' : undefined}
+      >
         {value}
         {unit && <span className="text-zinc-500 ml-1">{unit}</span>}
       </span>
@@ -148,6 +163,12 @@ function maskIp(ip: string): string {
   return `${parts[0]}.•••.•••.•••`
 }
 
+function formatBps(bps: number): string {
+  if (bps >= 1_000_000) return `${(bps / 1_000_000).toFixed(1)} MB/s`
+  if (bps >= 1_000) return `${(bps / 1_000).toFixed(1)} KB/s`
+  return `${bps} B/s`
+}
+
 function deriveProjectName(raw: string): string {
   return raw
     .replace(/[-_](server|app|backend|frontend|api|web|service)$/i, '')
@@ -196,7 +217,7 @@ function MetaChip({ label, value }: { label: string; value: string }) {
   )
 }
 
-function ActiveServicesCard({ services, loading, cpuPercent }: { services: ServicesData | null; loading: boolean; cpuPercent: number }) {
+function ActiveServicesCard({ services, loading, cpuPercent, showPorts, onStartRevealPorts, onStopRevealPorts }: { services: ServicesData | null; loading: boolean; cpuPercent: number; showPorts: boolean; onStartRevealPorts: () => void; onStopRevealPorts: () => void }) {
   if (loading && !services) {
     return (
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 h-full">
@@ -229,11 +250,21 @@ function ActiveServicesCard({ services, loading, cpuPercent }: { services: Servi
     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex flex-col md:h-full md:max-h-[85vh]">
       <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <h3 className="text-zinc-400 text-sm font-medium">Active Services</h3>
-        {totalCount > 0 && (
-          <span className="text-xs bg-zinc-800 text-zinc-400 font-mono px-2 py-0.5 rounded-full">
-            {totalCount} running
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {totalCount > 0 && (
+            <span className="text-xs bg-zinc-800 text-zinc-400 font-mono px-2 py-0.5 rounded-full">
+              {totalCount} running
+            </span>
+          )}
+          <button
+            onMouseDown={onStartRevealPorts} onMouseUp={onStopRevealPorts} onMouseLeave={onStopRevealPorts}
+            onTouchStart={onStartRevealPorts} onTouchEnd={onStopRevealPorts}
+            className="text-xs text-zinc-600 hover:text-zinc-400 select-none transition-colors"
+            title="Hold to reveal ports"
+          >
+            {showPorts ? '🔓' : '🔒'}
+          </button>
+        </div>
       </div>
 
       {totalCount === 0 ? (
@@ -252,7 +283,7 @@ function ActiveServicesCard({ services, loading, cpuPercent }: { services: Servi
                       key={p.name}
                       dot={<PulseDot color={dotColor} cpu={p.cpu} />}
                       name={deriveProjectName(p.name)}
-                      port={matchedPort ? String(matchedPort) : undefined}
+                      port={showPorts && matchedPort ? String(matchedPort) : undefined}
                       badges={
                         <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${
                           p.status === 'online' ? 'bg-green-500/10 text-green-400' :
@@ -284,7 +315,7 @@ function ActiveServicesCard({ services, loading, cpuPercent }: { services: Servi
                     key={p.port}
                     dot={<PulseDot color="bg-cyan-500" cpu={cpuPercent} />}
                     name={deriveProjectName(p.process)}
-                    port={String(p.port)}
+                    port={showPorts ? String(p.port) : undefined}
                     meta={p.pid ? <MetaChip label="pid" value={String(p.pid)} /> : undefined}
                   />
                 ))}
@@ -412,6 +443,12 @@ export default function Dashboard() {
   const [services, setServices] = useState<ServicesData | null>(null)
   const [servicesLoading, setServicesLoading] = useState(true)
   const [showIp, setShowIp] = useState(false)
+  const [showPorts, setShowPorts] = useState(false)
+
+  const startReveal = () => setShowIp(true)
+  const stopReveal = () => setShowIp(false)
+  const startRevealPorts = () => setShowPorts(true)
+  const stopRevealPorts = () => setShowPorts(false)
   const sidRef = useRef<string>(typeof window !== 'undefined' ? getSessionId() : '')
 
   const fetchHealth = async () => {
@@ -485,7 +522,12 @@ export default function Dashboard() {
             <h1 className="text-xl font-bold leading-none">PiZoW Monitor</h1>
             <p className="text-zinc-500 text-xs mt-1">
               {data?.system.hostname} •{' '}
-              <span className="cursor-pointer select-none" onClick={() => setShowIp(v => !v)} title={showIp ? 'Hide IP' : 'Show IP'}>
+              <span
+                className="cursor-pointer select-none"
+                onMouseDown={startReveal} onMouseUp={stopReveal} onMouseLeave={stopReveal}
+                onTouchStart={startReveal} onTouchEnd={stopReveal}
+                title="Hold to reveal"
+              >
                 {showIp ? data?.system.ip : (data?.system.ip ? maskIp(data.system.ip) : '•••.•••.•••.•••')}
               </span>
               {lastUpdate && <span className="ml-1">• {lastUpdate.toLocaleTimeString()}</span>}
@@ -521,7 +563,7 @@ export default function Dashboard() {
           {/* Active Services — fills full right-column height on desktop */}
           <div className="md:col-span-3 md:flex md:flex-col">
             <div className="md:flex-1">
-              <ActiveServicesCard services={services} loading={servicesLoading} cpuPercent={data?.cpu?.percent ?? 0} />
+              <ActiveServicesCard services={services} loading={servicesLoading} cpuPercent={data?.cpu?.percent ?? 0} showPorts={showPorts} onStartRevealPorts={startRevealPorts} onStopRevealPorts={stopRevealPorts} />
             </div>
           </div>
 
@@ -533,7 +575,7 @@ export default function Dashboard() {
               <div className="grid grid-cols-2 gap-x-4">
                 <div>
                   <p className="text-zinc-500 text-xs font-medium uppercase tracking-wide mb-2">System</p>
-                  <Metric label="IP" value={showIp ? (data?.system.ip ?? '--') : (data?.system.ip ? maskIp(data.system.ip) : '•••.•••.•••')} onClick={() => setShowIp(v => !v)} clickable />
+                  <Metric label="IP" value={showIp ? (data?.system.ip ?? '--') : (data?.system.ip ? maskIp(data.system.ip) : '•••.•••.•••')} onMouseDown={startReveal} onMouseUp={stopReveal} onMouseLeave={stopReveal} onTouchStart={startReveal} onTouchEnd={stopReveal} clickable />
                   <Metric label="Uptime" value={data?.system.uptime ?? '--'} />
                   <Metric label="Platform" value={`${data?.system.platform ?? '--'}/${data?.system.arch ?? '--'}`} />
                   <Metric label="Processes" value={data?.processes.node ?? '--'} />
@@ -583,10 +625,68 @@ export default function Dashboard() {
                 </div>
                 <Metric label="Free" value={data?.disk?.available ?? '--'} />
               </div>
+
+              {/* NAS section inline — only shown when mounted */}
+              {data?.nas && (
+                <div className="border-t border-zinc-800 mt-3 pt-3">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <p className="text-zinc-400 text-xs font-medium uppercase tracking-wide">NAS</p>
+                      <span className="text-xs bg-green-500/10 text-green-400 px-1.5 py-0.5 rounded font-mono">mounted</span>
+                    </div>
+                    <a
+                      href={`http://${data.system.ip}:8080`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-cyan-400 hover:text-cyan-300 bg-cyan-500/10 hover:bg-cyan-500/20 px-2 py-1 rounded transition-colors font-medium"
+                    >
+                      Browse Files ↗
+                    </a>
+                  </div>
+                  <div className="mb-3">
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="text-zinc-400">Usage</span>
+                      <span className="font-mono">{data.nas.used} / {data.nas.total}</span>
+                    </div>
+                    <ProgressBar percent={data.nas.percent} color="blue" />
+                  </div>
+                  <Metric label="Free" value={data.nas.available} />
+                </div>
+              )}
             </div>
 
           </div>
         </div>
+
+        {/* Network throughput */}
+        {data?.network && (
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3">
+            <div className="flex items-center gap-1.5 mb-2.5">
+              <p className="text-zinc-500 text-xs font-medium uppercase tracking-wide">Network</p>
+              <button type="button" className="relative group flex items-center text-zinc-600 hover:text-zinc-400 cursor-help transition-colors focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+                </svg>
+                <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-xs text-zinc-300 leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50 shadow-xl">
+                  Live throughput across all active network interfaces (wlan0, eth0). Updates every 5s. Shows bytes transferred since last poll.
+                  <span className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-zinc-700" />
+                </span>
+              </button>
+            </div>
+            <div className="flex gap-3">
+              <div className="flex-1 flex items-center gap-2.5 bg-zinc-800/50 rounded-lg px-3 py-2">
+                <span className="text-green-400 text-xs font-mono">↓</span>
+                <span className="text-zinc-400 text-xs">Download</span>
+                <span className="text-green-400 font-mono text-sm font-bold ml-auto">{formatBps(data.network.rxBps)}</span>
+              </div>
+              <div className="flex-1 flex items-center gap-2.5 bg-zinc-800/50 rounded-lg px-3 py-2">
+                <span className="text-blue-400 text-xs font-mono">↑</span>
+                <span className="text-zinc-400 text-xs">Upload</span>
+                <span className="text-blue-400 font-mono text-sm font-bold ml-auto">{formatBps(data.network.txBps)}</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Full-width traffic bar */}
         <div className="mb-4">
