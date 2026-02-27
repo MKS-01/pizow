@@ -281,15 +281,15 @@ Prints CPU temp, memory, disk, and uptime. Useful for quick SSH checks.
 A real-time Pi monitoring dashboard with auto-refresh, live TCP traffic, IP masking, and mobile support. Deploy it as your Pi's home page and always know what's running.
 
 **Dashboard features:**
-- Temperature, Memory %, CPU %, Disk % at a glance
+- Temperature, Memory %, CPU %, Disk %, and **active viewer count** at a glance
 - All running services: PM2 processes, open ports, systemd units, Node.js processes
-- System info: IP partially masked by default (click to reveal), uptime, platform
+- System info: IP partially masked by default (hold to reveal), uptime, platform
 - CPU load averages (1m / 5m / 15m) and core count
 - RAM, Swap, and Disk usage with visual progress bars
 - **NAS card** — shows pendrive usage, free space, "Browse Files" button (only when mounted)
-- **Network throughput** — live ↓ Download / ↑ Upload across all interfaces (wlan0, eth0), updates every 5s
-- Live Traffic card — TCP established connections per service, with manual refresh button
-- Active viewer count tracked per browser session (TTL: 35s, updates every 5s)
+- **Network sparkline** — rolling SVG chart of ↓ Download / ↑ Upload over a 2.5min window, updates every 5s. Shows current speed, peak in window, and a live activity indicator
+- Active viewer count tracked per browser session (TTL: 35s) — counts real browser tabs currently polling the dashboard
+- Equal-height layout — Active Services and system cards always align on desktop regardless of service count
 - Auto-refreshes every 5s (health) and 15s (services)
 - Mobile responsive
 
