@@ -102,6 +102,11 @@ NAS_LABEL="pizow-nas"
 FILEBROWSER_PORT=8080
 # NFS export: allow entire /24 subnet by default
 NFS_SUBNET="192.168.1.0/24"
+# File Browser admin password — must be set via FB_PASSWORD in .env
+if [ -z "${FB_PASSWORD:-}" ]; then
+    print_error "FB_PASSWORD is not set. Add it to your .env file before running."
+    exit 1
+fi
 
 print_header
 
@@ -281,11 +286,11 @@ if [ ! -f "$FB_DIR/filebrowser.db" ]; then
 fi
 
 # Always ensure admin user exists (add or update)
-filebrowser users add admin pizow123456789 \
+filebrowser users add admin "$FB_PASSWORD" \
     --database "$FB_DIR/filebrowser.db" \
     --perm.admin 2>/dev/null \
 || filebrowser users update admin \
-    --password pizow123456789 \
+    --password "$FB_PASSWORD" \
     --database "$FB_DIR/filebrowser.db" 2>/dev/null || true
 
 # Create systemd service for File Browser
@@ -312,7 +317,7 @@ _sudo systemctl enable filebrowser
 _sudo systemctl restart filebrowser
 
 print_success "File Browser running at http://$(hostname -I | awk '{print $1}'):${FILEBROWSER_PORT}"
-print_warn "Default login: admin / pizow123456789 — CHANGE THE PASSWORD after first login!"
+print_warn "Login: admin / ${FB_PASSWORD} — change the password after first login!"
 
 # ── Step 7: Dashboard info endpoint ──────────────────────────────
 print_step 7 "Creating NAS info endpoint for dashboard..."

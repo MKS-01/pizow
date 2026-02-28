@@ -1,6 +1,6 @@
 # PiZoW
 
-> Turn your Raspberry Pi Zero W into a lightweight home server — with deployment scripts, process management, and a real-time monitoring dashboard.
+> Turn your Raspberry Pi Zero W into a lightweight home server — with deployment scripts, process management, a real-time monitoring dashboard, and NAS storage via USB.
 
 ![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-C51A4A?style=for-the-badge&logo=Raspberry-Pi&logoColor=white)
 ![Node](https://img.shields.io/badge/Node-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
@@ -17,6 +17,17 @@
   </tr>
 </table>
 
+### NAS — File Browser
+
+File Browser runs at `http://PI_IP:8080` after `setup-nas.sh`. Accessible from any device on your network.
+
+<table>
+  <tr>
+    <td><a href="screenshot/mobile-nas.jpg"><img src="screenshot/mobile-nas.jpg" height="320" alt="File Browser Login" /></a></td>
+    <td><a href="screenshot/mobile-nas2.jpg"><img src="screenshot/mobile-nas2.jpg" height="320" alt="File Browser Menu" /></a></td>
+  </tr>
+</table>
+
 ---
 
 ## What is PiZoW?
@@ -26,6 +37,7 @@ PiZoW is a collection of shell scripts and a ready-to-use example project that m
 - **Set up** a Raspberry Pi Zero W as a Node.js web server
 - **Deploy** any Node.js app (Next.js, Express, Fastify, etc.) from your local machine
 - **Monitor** your Pi in real time with a beautiful dashboard
+- **Turn any USB storage into a NAS** — NFS share + File Browser web UI, fully integrated into the dashboard
 
 The included **Next.js example** doubles as a fully functional **monitoring dashboard** for your Pi home server — showing CPU, memory, disk, temperature, network throughput, NAS storage, uptime, and all running services in a single-page view. It's both a demo project and something you'll actually want to keep running.
 
@@ -93,8 +105,10 @@ PROJECT_NAME=myapp
 PROJECT_PATH=/home/your_username/myapp
 LOCAL_PATH=/path/to/your/local/project   # for local deploy
 REPO_URL=git@github.com:you/myapp.git    # for remote deploy
+BRANCH=main                              # branch to pull (remote mode)
 PORT=3000
 PM2_APP_NAME=myapp
+FB_PASSWORD=your_password                # File Browser admin password (required for setup-nas.sh)
 ```
 
 ### 5. Deploy
@@ -163,7 +177,7 @@ Run once on a fresh Pi. Installs and configures everything:
 
 ### `setup-nas.sh`
 
-Turns your Pi into a NAS using a USB pendrive.
+Turns your Pi into a NAS using any USB storage drive.
 
 ```bash
 # Run from your Mac (auto-forwards to Pi via SSH)
@@ -179,7 +193,7 @@ Turns your Pi into a NAS using a USB pendrive.
 |-----------|---------|
 | Format | ext4 — full Linux permissions and ownership support |
 | Mount | Auto-mounts at `/mnt/nas` on every boot via `/etc/fstab` |
-| Auto-remount | udev rule re-mounts automatically when pendrive is plugged in |
+| Auto-remount | udev rule re-mounts automatically when drive is plugged in |
 | NFS server | Network share — mount on Mac/Linux as a network drive |
 | File Browser | Web UI at `http://PI_IP:8080` — browse, upload, download |
 | Dashboard | NAS usage card + network throughput shown in monitoring dashboard |
@@ -195,10 +209,13 @@ Turns your Pi into a NAS using a USB pendrive.
 7. **NAS stats API** — a minimal bash HTTP server on port 8081 returning drive stats as JSON, used by the monitoring dashboard.
 8. **udev auto-remount rule** — installs `/etc/udev/rules.d/99-pizow-nas.rules` so the drive auto-remounts when plugged in after boot.
 
+**Prerequisites:**
+- SSH key auth set up (`ssh-copy-id`) — recommended. If not, set `PI_PASSWORD` in `.env` and install `sshpass` on your Mac (`brew install sshpass`) so the script can forward itself to the Pi.
+
 **Hardware requirements:**
 - USB OTG adapter (Micro-USB → USB-A) — required for Pi Zero
-- **Use a pendrive (flash drive), not a spinning HDD** — see power note below
-- Pendrive must be connected and visible (`lsblk` shows a USB disk) before running
+- **Flash drives recommended over spinning HDDs on Pi Zero** — see power note below
+- Drive must be connected and visible (`lsblk` shows a USB disk) before running
 
 > **⚠️ Power / HDD Warning**
 >
@@ -207,12 +224,12 @@ Turns your Pi into a NAS using a USB pendrive.
 > - The Pi to brown-out and reboot
 > - Intermittent disconnects under load
 >
-> **Use a pendrive.** If you need large storage with an HDD, use a **powered USB hub** between the Pi and the drive.
+> **Use a flash drive** for Pi Zero. If you need large storage with an HDD, use a **powered USB hub** between the Pi and the drive.
 
 **Mount behavior:**
-- Pi boots with pendrive plugged in → auto-mounts via fstab ✓
-- Pi boots without pendrive → boots fine, `/mnt/nas` stays empty (`nofail`) ✓
-- Plug in pendrive after boot → udev rule auto-remounts within seconds ✓
+- Pi boots with drive plugged in → auto-mounts via fstab ✓
+- Pi boots without drive → boots fine, `/mnt/nas` stays empty (`nofail`) ✓
+- Plug in drive after boot → udev rule auto-remounts within seconds ✓
 
 **Connect from Mac:**
 ```bash
@@ -228,7 +245,20 @@ sudo mount -t nfs PI_IP:/mnt/nas /Volumes/pizow-nas
 sudo mount -t nfs PI_IP:/mnt/nas /mnt/pizow-nas
 ```
 
-> **Default File Browser credentials:** `admin` / `pizow123456789` — change after first login at `http://PI_IP:8080`
+> **File Browser credentials:** `admin` / your `FB_PASSWORD` — must be set in `.env` before running the script. Change after first login at `http://PI_IP:8080`
+
+### `deploy-standalone.sh`
+
+An alternative to `deploy.sh` specifically for Next.js standalone builds. Builds locally and rsyncs only the prebuilt output — no `node_modules` copied, minimal footprint on the Pi.
+
+```bash
+./scripts/deploy-standalone.sh              # full build + deploy
+./scripts/deploy-standalone.sh --skip-build # deploy existing build (skip npm run build)
+```
+
+Uses `BUILD_DIR` from `.env` (defaults to `examples/nextjs`). Starts the app directly with `node server.js` via nohup — not PM2. Logs go to `/tmp/pizow.log` on the Pi.
+
+> Use `deploy.sh` for general use (PM2 managed). Use `deploy-standalone.sh` if you want a quick, no-PM2 deploy of the Next.js example.
 
 ### `reset-nas.sh`
 
@@ -286,7 +316,7 @@ A real-time Pi monitoring dashboard with auto-refresh, live TCP traffic, IP mask
 - System info: IP partially masked by default (hold to reveal), uptime, platform
 - CPU load averages (1m / 5m / 15m) and core count
 - RAM, Swap, and Disk usage with visual progress bars
-- **NAS card** — shows pendrive usage, free space, "Browse Files" button (only when mounted)
+- **NAS card** — shows storage usage, free space, "Browse Files" button (only when mounted)
 - **Network sparkline** — rolling SVG chart of ↓ Download / ↑ Upload over a 2.5min window, updates every 5s. Shows current speed, peak in window, and a live activity indicator
 - Active viewer count tracked per browser session (TTL: 35s) — counts real browser tabs currently polling the dashboard
 - Equal-height layout — Active Services and system cards always align on desktop regardless of service count
@@ -311,21 +341,29 @@ Good starting point for building your own Pi backend.
 Browser
   │
   ▼ HTTP/HTTPS
-┌────────────────────────────┐
-│     Raspberry Pi Zero W    │
-│                            │
-│  Nginx (port 80/443)       │
-│  └─ Reverse proxy          │
-│     │                      │
-│     ▼                      │
-│  PM2                       │
-│  └─ Process manager        │
-│     │  Auto-restart        │
-│     │  Boot startup        │
-│     ▼                      │
-│  Your Node.js App          │
-│  (Next.js / Express / ...) │
-└────────────────────────────┘
+┌────────────────────────────────────┐
+│        Raspberry Pi Zero W         │
+│                                    │
+│  Nginx (port 80/443)               │
+│  └─ Reverse proxy                  │
+│     │                              │
+│     ▼                              │
+│  PM2                               │
+│  └─ Process manager                │
+│     │  Auto-restart / boot         │
+│     ▼                              │
+│  Your Node.js App                  │
+│  (Next.js / Express / ...)         │
+│                                    │
+│  File Browser  (port 8080)         │
+│  └─ Web UI for NAS files           │
+│                                    │
+│  NAS Stats API (port 8081)         │
+│  └─ JSON endpoint for dashboard    │
+│                                    │
+│  /mnt/nas  ←──  USB storage        │
+│  └─ NFS export to local network    │
+└────────────────────────────────────┘
 ```
 
 ---
@@ -340,7 +378,7 @@ mountpoint /mnt/nas && df -h /mnt/nas
 
 # Manually mount/unmount
 sudo mount -a                      # mount everything in fstab
-sudo umount /mnt/nas               # unmount pendrive safely
+sudo umount /mnt/nas               # unmount drive safely
 
 # NFS
 sudo exportfs -v                   # show active NFS exports
@@ -436,7 +474,7 @@ The NAS card only appears when `/mnt/nas` is mounted. Check:
 
 ```bash
 mountpoint /mnt/nas    # is it mounted?
-lsblk                  # is the pendrive detected?
+lsblk                  # is the drive detected?
 sudo mount -a          # try mounting from fstab manually
 ```
 
