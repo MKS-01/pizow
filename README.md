@@ -12,7 +12,7 @@
 
 <table>
   <tr>
-    <td><a href="screenshot/web.png"><img src="screenshot/web.png?v=2" height="280" alt="Desktop" /></a></td>
+    <td><a href="screenshot/web-dashboard.png"><img src="screenshot/web-dashboard.png" height="280" alt="Desktop" /></a></td>
     <td><a href="screenshot/mobile.jpg"><img src="screenshot/mobile.jpg" height="280" alt="Mobile" /></a></td>
   </tr>
 </table>
