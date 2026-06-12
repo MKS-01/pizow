@@ -17,17 +17,6 @@
   </tr>
 </table>
 
-### NAS — File Browser
-
-File Browser runs at `http://PI_IP:8080` after `setup-nas.sh`. Accessible from any device on your network.
-
-<table>
-  <tr>
-    <td><a href="screenshot/mobile-nas.jpg"><img src="screenshot/mobile-nas.jpg" height="320" alt="File Browser Login" /></a></td>
-    <td><a href="screenshot/mobile-nas2.jpg"><img src="screenshot/mobile-nas2.jpg" height="320" alt="File Browser Menu" /></a></td>
-  </tr>
-</table>
-
 ---
 
 ## What is PiZoW?
@@ -40,6 +29,23 @@ PiZoW is a collection of shell scripts and a ready-to-use example project that m
 - **Turn any USB storage into a NAS** — NFS share + File Browser web UI, fully integrated into the dashboard
 
 The included **Next.js example** doubles as a fully functional **monitoring dashboard** for your Pi home server — showing CPU, memory, disk, temperature, network throughput, NAS storage, uptime, and all running services in a single-page view. It's both a demo project and something you'll actually want to keep running.
+
+---
+
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [Deploy the Monitoring Dashboard](#deploy-the-monitoring-dashboard)
+- [Project Structure](#project-structure)
+- [Scripts Reference](#scripts-reference)
+- [Examples](#examples)
+- [Architecture](#architecture)
+- [Useful Commands on the Pi](#useful-commands-on-the-pi)
+- [Troubleshooting](#troubleshooting)
+- [Requirements](#requirements)
+- [Contributing](#contributing)
+- [License](#license)
+- [Resources](#resources)
 
 ---
 
@@ -175,9 +181,41 @@ Run once on a fresh Pi. Installs and configures everything:
 - Nginx (reverse proxy)
 - 1 GB swap file
 
+### `deploy.sh`
+
+```bash
+./scripts/deploy.sh [--local] [--remote] [--restart]
+```
+
+| Flag | Description |
+|------|-------------|
+| `--local` | Build on your machine, rsync output to Pi (default) |
+| `--remote` | Pi pulls from git and builds there |
+| `--restart` | Skip build/sync, just restart PM2 |
+
+### `deploy-standalone.sh`
+
+An alternative to `deploy.sh` specifically for Next.js standalone builds. Builds locally and rsyncs only the prebuilt output — no `node_modules` copied, minimal footprint on the Pi.
+
+```bash
+./scripts/deploy-standalone.sh              # full build + deploy
+./scripts/deploy-standalone.sh --skip-build # deploy existing build (skip npm run build)
+```
+
+Uses `BUILD_DIR` from `.env` (defaults to `examples/nextjs`). Starts the app directly with `node server.js` via nohup — not PM2. Logs go to `/tmp/pizow.log` on the Pi.
+
+> Use `deploy.sh` for general use (PM2 managed). Use `deploy-standalone.sh` if you want a quick, no-PM2 deploy of the Next.js example.
+
 ### `setup-nas.sh`
 
-Turns your Pi into a NAS using any USB storage drive.
+Turns your Pi into a NAS using any USB storage drive. After setup, File Browser runs at `http://PI_IP:8080` — accessible from any device on your network.
+
+<table>
+  <tr>
+    <td><a href="screenshot/mobile-nas.jpg"><img src="screenshot/mobile-nas.jpg" height="320" alt="File Browser Login" /></a></td>
+    <td><a href="screenshot/mobile-nas2.jpg"><img src="screenshot/mobile-nas2.jpg" height="320" alt="File Browser Menu" /></a></td>
+  </tr>
+</table>
 
 ```bash
 # Run from your Mac (auto-forwards to Pi via SSH)
@@ -247,19 +285,6 @@ sudo mount -t nfs PI_IP:/mnt/nas /mnt/pizow-nas
 
 > **File Browser credentials:** `admin` / your `FB_PASSWORD` — must be set in `.env` before running the script. Change after first login at `http://PI_IP:8080`
 
-### `deploy-standalone.sh`
-
-An alternative to `deploy.sh` specifically for Next.js standalone builds. Builds locally and rsyncs only the prebuilt output — no `node_modules` copied, minimal footprint on the Pi.
-
-```bash
-./scripts/deploy-standalone.sh              # full build + deploy
-./scripts/deploy-standalone.sh --skip-build # deploy existing build (skip npm run build)
-```
-
-Uses `BUILD_DIR` from `.env` (defaults to `examples/nextjs`). Starts the app directly with `node server.js` via nohup — not PM2. Logs go to `/tmp/pizow.log` on the Pi.
-
-> Use `deploy.sh` for general use (PM2 managed). Use `deploy-standalone.sh` if you want a quick, no-PM2 deploy of the Next.js example.
-
 ### `reset-nas.sh`
 
 Wipes all NAS components so you can run `setup-nas.sh` fresh. **Does not delete data on the USB drive itself.**
@@ -269,18 +294,6 @@ Wipes all NAS components so you can run `setup-nas.sh` fresh. **Does not delete 
 ```
 
 Removes: File Browser service + binary + db, NAS stats API service, NFS exports, fstab entry, mount point, udev rule.
-
-### `deploy.sh`
-
-```bash
-./scripts/deploy.sh [--local] [--remote] [--restart]
-```
-
-| Flag | Description |
-|------|-------------|
-| `--local` | Build on your machine, rsync output to Pi (default) |
-| `--remote` | Pi pulls from git and builds there |
-| `--restart` | Skip build/sync, just restart PM2 |
 
 ### `manage.sh`
 
