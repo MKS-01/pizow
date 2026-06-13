@@ -50,7 +50,7 @@ ssh user@host "df -h && free -h"
 
 # Config shortcut (~/.ssh/config)
 # Host pi
-#   HostName 192.168.31.199
+#   HostName YOUR_PI_IP
 #   User mks
 #   IdentityFile ~/.ssh/id_ed25519
 # Then just: ssh pi
@@ -332,7 +332,7 @@ ctrl+r                                        # reverse search history
 # Aliases (add to ~/.bashrc or ~/.zshrc)
 alias ll='ls -lah'
 alias gs='git status'
-alias pi='ssh mks@192.168.31.199'
+alias pi='ssh YOUR_USER@YOUR_PI_IP'
 
 # Environment
 echo $PATH
@@ -356,4 +356,4 @@ sort file.txt | uniq -c | sort -rn           # frequency count
 
 ---
 
-> Pi Zero 2W at `192.168.31.199` · user `mks` · dashboard at `:3000`
+> Configure your Pi details in `.env` — see `.env.example` for required vars.
