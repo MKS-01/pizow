@@ -49,9 +49,6 @@ async function getMemory() {
     }
 
     const total = getValue('MemTotal:')
-    const free = getValue('MemFree:')
-    const buffers = getValue('Buffers:')
-    const cached = getValue('Cached:')
     const available = getValue('MemAvailable:')
     const swapTotal = getValue('SwapTotal:')
     const swapFree = getValue('SwapFree:')

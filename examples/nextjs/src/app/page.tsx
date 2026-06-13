@@ -566,6 +566,8 @@ export default function Dashboard() {
     if (data.memory && data.memory.percent > 80) return 'warning'
     if (data.disk && data.disk.percent > 90) return 'critical'
     if (data.disk && data.disk.percent > 80) return 'warning'
+    if (data.cpu && data.cpu.percent > 90) return 'critical'
+    if (data.cpu && data.cpu.percent > 75) return 'warning'
     return 'ok'
   }
 
