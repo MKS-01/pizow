@@ -71,7 +71,7 @@ function StatusBadge({ status }: { status: 'ok' | 'warning' | 'critical' }) {
 
   return (
     <span className={`px-3 py-1 rounded-full text-sm font-medium ${colors[status]}`}>
-      <span className="inline-block w-2 h-2 rounded-full bg-current mr-2 animate-pulse" />
+      <span className="inline-block w-2 h-2 rounded-full bg-current mr-2" />
       {labels[status]}
     </span>
   )
@@ -90,7 +90,7 @@ function ProgressBar({ percent, color = 'green' }: { percent: number; color?: st
   return (
     <div className="w-full bg-zinc-800 rounded-full h-2 overflow-hidden">
       <div
-        className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+        className={`h-full rounded-full transition-[width] duration-200 ${barColor}`}
         style={{ width: `${Math.min(100, percent)}%` }}
       />
     </div>
@@ -128,22 +128,10 @@ function formatUptime(uptimeSince: number | null): string {
   return `${s}s`
 }
 
-// Returns animation-duration based on CPU% — faster pulse = higher load
-function heartbeatDuration(cpu: number): string {
-  if (cpu >= 80) return '0.5s'
-  if (cpu >= 50) return '0.9s'
-  if (cpu >= 20) return '1.4s'
-  return '2.2s'
-}
-
-function PulseDot({ color, cpu = 0 }: { color: string; cpu?: number }) {
+function PulseDot({ color, breathe = false }: { color: string; breathe?: boolean }) {
   return (
     <span className="relative flex-shrink-0 w-2 h-2">
-      <span
-        className={`absolute inline-flex h-full w-full rounded-full opacity-60 ${color}`}
-        style={{ animation: `ping ${heartbeatDuration(cpu)} ease-in-out infinite` }}
-      />
-      <span className={`relative inline-flex rounded-full h-2 w-2 ${color}`} />
+      <span className={`relative inline-flex rounded-full h-2 w-2 ${color} ${breathe ? 'dot-breathe' : ''}`} />
     </span>
   )
 }
@@ -217,7 +205,7 @@ function MetaChip({ label, value }: { label: string; value: string }) {
   )
 }
 
-function ActiveServicesCard({ services, loading, cpuPercent, showPorts, onStartRevealPorts, onStopRevealPorts }: { services: ServicesData | null; loading: boolean; cpuPercent: number; showPorts: boolean; onStartRevealPorts: () => void; onStopRevealPorts: () => void }) {
+function ActiveServicesCard({ services, loading, showPorts, onStartRevealPorts, onStopRevealPorts }: { services: ServicesData | null; loading: boolean; showPorts: boolean; onStartRevealPorts: () => void; onStopRevealPorts: () => void }) {
   if (loading && !services) {
     return (
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 h-full">
@@ -259,7 +247,7 @@ function ActiveServicesCard({ services, loading, cpuPercent, showPorts, onStartR
           <button
             onMouseDown={onStartRevealPorts} onMouseUp={onStopRevealPorts} onMouseLeave={onStopRevealPorts}
             onTouchStart={onStartRevealPorts} onTouchEnd={onStopRevealPorts}
-            className="text-xs text-zinc-600 hover:text-zinc-400 select-none transition-colors"
+            className="text-xs text-zinc-600 hover:text-zinc-400 select-none transition-colors active:scale-[0.97] transition-transform duration-100"
             title="Hold to reveal ports"
           >
             {showPorts ? '🔓' : '🔒'}
@@ -281,7 +269,7 @@ function ActiveServicesCard({ services, loading, cpuPercent, showPorts, onStartR
                   return (
                     <ServiceRow
                       key={p.name}
-                      dot={<PulseDot color={dotColor} cpu={p.cpu} />}
+                      dot={<PulseDot color={dotColor} breathe={p.status === 'online'} />}
                       name={deriveProjectName(p.name)}
                       port={showPorts && matchedPort ? String(matchedPort) : undefined}
                       badges={
@@ -313,7 +301,7 @@ function ActiveServicesCard({ services, loading, cpuPercent, showPorts, onStartR
                 {unclaimedPorts.map(p => (
                   <ServiceRow
                     key={p.port}
-                    dot={<PulseDot color="bg-cyan-500" cpu={cpuPercent} />}
+                    dot={<PulseDot color="bg-cyan-500" />}
                     name={deriveProjectName(p.process)}
                     port={showPorts ? String(p.port) : undefined}
                     meta={p.pid ? <MetaChip label="pid" value={String(p.pid)} /> : undefined}
@@ -330,7 +318,7 @@ function ActiveServicesCard({ services, loading, cpuPercent, showPorts, onStartR
                 {services.systemd.map(s => (
                   <ServiceRow
                     key={s.name}
-                    dot={<PulseDot color="bg-emerald-500" cpu={cpuPercent} />}
+                    dot={<PulseDot color="bg-emerald-500" />}
                     name={deriveProjectName(s.name)}
                     badges={
                       <span className="text-xs font-mono bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded">
@@ -350,7 +338,7 @@ function ActiveServicesCard({ services, loading, cpuPercent, showPorts, onStartR
                 {dedupedNodeProcs.map(p => (
                   <ServiceRow
                     key={p.pid}
-                    dot={<PulseDot color="bg-blue-500" cpu={cpuPercent} />}
+                    dot={<PulseDot color="bg-blue-500" />}
                     name={deriveProjectName(p.script)}
                     meta={
                       <>
@@ -365,6 +353,45 @@ function ActiveServicesCard({ services, loading, cpuPercent, showPorts, onStartR
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+function TempGaugeCard({ temp }: { temp: number | null }) {
+  const MIN = 30, MAX = 85
+  const pct = temp !== null ? Math.max(0, Math.min(1, (temp - MIN) / (MAX - MIN))) : 0
+  const r = 30, cx = 40, cy = 40
+  const arcLen = 2 * Math.PI * r * 0.75
+  const offset = arcLen - arcLen * pct
+
+  const color = temp !== null && temp >= 70 ? '#f87171' : temp !== null && temp >= 55 ? '#facc15' : '#4ade80'
+  const borderClass = temp !== null && temp >= 70 ? 'border-red-900/50' : temp !== null && temp >= 55 ? 'border-yellow-900/50' : 'border-green-900/40'
+
+  const startX = (cx + r * Math.cos((135 * Math.PI) / 180)).toFixed(1)
+  const startY = (cy + r * Math.sin((135 * Math.PI) / 180)).toFixed(1)
+  const endX = (cx + r * Math.cos((45 * Math.PI) / 180)).toFixed(1)
+  const endY = (cy + r * Math.sin((45 * Math.PI) / 180)).toFixed(1)
+  const arcPath = `M ${startX} ${startY} A ${r} ${r} 0 1 1 ${endX} ${endY}`
+
+  return (
+    <div className={`bg-zinc-900 border ${borderClass} rounded-xl p-3 flex items-center gap-2`}>
+      <svg width={60} height={60} viewBox="0 0 80 80" aria-hidden="true">
+        <path d={arcPath} fill="none" stroke="#27272a" strokeWidth={7} strokeLinecap="round" />
+        <path
+          d={arcPath}
+          fill="none"
+          stroke={color}
+          strokeWidth={7}
+          strokeLinecap="round"
+          strokeDasharray={arcLen}
+          strokeDashoffset={offset}
+          style={{ transition: 'stroke-dashoffset 0.2s ease, stroke 0.4s ease' }}
+        />
+        <text x={cx} y={cy + 6} textAnchor="middle" fill={color} fontSize={15} fontWeight="bold" fontFamily="ui-monospace,monospace">
+          {temp !== null ? `${temp.toFixed(0)}°` : '--'}
+        </text>
+      </svg>
+      <span className="text-zinc-500 text-sm">Temp</span>
     </div>
   )
 }
@@ -438,7 +465,7 @@ function NetworkSparklineCard({ samples }: { samples: NetSample[] }) {
         <div className="flex items-center gap-2">
           <p className="text-zinc-500 text-xs font-medium uppercase tracking-wide">Network Throughput</p>
           <span className="relative flex-shrink-0 w-1.5 h-1.5">
-            <span className={`absolute inline-flex h-full w-full rounded-full ${hasTraffic ? 'bg-green-400 animate-ping opacity-60' : 'bg-zinc-600'}`} />
+            <span className={`absolute inline-flex h-full w-full rounded-full ${hasTraffic ? 'bg-green-400 net-ping opacity-60' : 'bg-zinc-600'}`} />
             <span className={`relative inline-flex rounded-full w-1.5 h-1.5 ${hasTraffic ? 'bg-green-400' : 'bg-zinc-600'}`} />
           </span>
         </div>
@@ -590,7 +617,7 @@ export default function Dashboard() {
             <p className="text-zinc-500 text-xs mt-1">
               {data?.system.hostname} •{' '}
               <span
-                className="cursor-pointer select-none"
+                className="cursor-pointer select-none inline-block active:scale-[0.97] transition-transform duration-100"
                 onMouseDown={startReveal} onMouseUp={stopReveal} onMouseLeave={stopReveal}
                 onTouchStart={startReveal} onTouchEnd={stopReveal}
                 title="Hold to reveal"
@@ -611,14 +638,14 @@ export default function Dashboard() {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 flex-shrink-0">
+          <TempGaugeCard temp={data?.temperature ?? null} />
           {[
-            { label: 'Temp', value: data?.temperature ? `${data.temperature.toFixed(1)}°` : '--', color: 'text-green-400' },
-            { label: 'Memory', value: `${data?.memory?.percent ?? '--'}%`, color: 'text-blue-400' },
-            { label: 'CPU', value: `${data?.cpu?.percent ?? '--'}%`, color: 'text-purple-400' },
-            { label: 'Disk', value: `${data?.disk?.percent ?? '--'}%`, color: 'text-orange-400' },
-            { label: 'Viewers', value: data?.viewers ?? 0, color: 'text-pink-400' },
-          ].map(({ label, value, color }) => (
-            <div key={label} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-center gap-3">
+            { label: 'Memory', value: `${data?.memory?.percent ?? '--'}%`, color: 'text-blue-400', border: 'border-blue-900/40' },
+            { label: 'CPU', value: `${data?.cpu?.percent ?? '--'}%`, color: 'text-purple-400', border: 'border-purple-900/40' },
+            { label: 'Disk', value: `${data?.disk?.percent ?? '--'}%`, color: 'text-orange-400', border: 'border-orange-900/40' },
+            { label: 'Viewers', value: data?.viewers ?? 0, color: 'text-pink-400', border: 'border-pink-900/40' },
+          ].map(({ label, value, color, border }) => (
+            <div key={label} className={`bg-zinc-900 border ${border} rounded-xl p-4 flex items-center gap-3`}>
               <span className={`text-2xl font-bold font-mono ${color}`}>{value}</span>
               <span className="text-zinc-500 text-sm">{label}</span>
             </div>
@@ -631,7 +658,7 @@ export default function Dashboard() {
           {/* Active Services — fills full left-column height on desktop */}
           <div className="md:col-span-3 md:flex md:flex-col">
             <div className="md:flex-1 md:min-h-0">
-              <ActiveServicesCard services={services} loading={servicesLoading} cpuPercent={data?.cpu?.percent ?? 0} showPorts={showPorts} onStartRevealPorts={startRevealPorts} onStopRevealPorts={stopRevealPorts} />
+              <ActiveServicesCard services={services} loading={servicesLoading} showPorts={showPorts} onStartRevealPorts={startRevealPorts} onStopRevealPorts={stopRevealPorts} />
             </div>
           </div>
 
