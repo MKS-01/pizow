@@ -371,39 +371,19 @@ function ActiveServicesCard({ services, loading, showPorts, onStartRevealPorts, 
 }
 
 function TempGaugeCard({ temp }: { temp: number | null }) {
-  const MIN = 30, MAX = 85
-  const pct = temp !== null ? Math.max(0, Math.min(1, (temp - MIN) / (MAX - MIN))) : 0
-  const r = 30, cx = 40, cy = 40
-  const arcLen = 2 * Math.PI * r * 0.75
-  const offset = arcLen - arcLen * pct
-
-  const color = temp !== null && temp >= 70 ? '#f87171' : temp !== null && temp >= 55 ? '#facc15' : '#4ade80'
-
-  const startX = (cx + r * Math.cos((135 * Math.PI) / 180)).toFixed(1)
-  const startY = (cy + r * Math.sin((135 * Math.PI) / 180)).toFixed(1)
-  const endX = (cx + r * Math.cos((45 * Math.PI) / 180)).toFixed(1)
-  const endY = (cy + r * Math.sin((45 * Math.PI) / 180)).toFixed(1)
-  const arcPath = `M ${startX} ${startY} A ${r} ${r} 0 1 1 ${endX} ${endY}`
+  const color = temp !== null && temp >= 70 ? 'text-red-400' : temp !== null && temp >= 55 ? 'text-yellow-400' : 'text-green-400'
+  const barColor = temp !== null && temp >= 70 ? 'bg-red-400' : temp !== null && temp >= 55 ? 'bg-yellow-400' : 'bg-green-400'
+  const pct = temp !== null ? Math.max(0, Math.min(100, ((temp - 30) / 55) * 100)) : 0
 
   return (
-    <div className="flex flex-col items-center justify-center gap-0.5 p-3 bg-[#111111]">
-      <svg width={64} height={42} viewBox="0 0 80 65" aria-hidden="true">
-        <path d={arcPath} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={7} strokeLinecap="round" />
-        <path
-          d={arcPath}
-          fill="none"
-          stroke={color}
-          strokeWidth={7}
-          strokeLinecap="round"
-          strokeDasharray={arcLen}
-          strokeDashoffset={offset}
-          style={{ transition: 'stroke-dashoffset 0.2s ease, stroke 0.4s ease' }}
-        />
-      </svg>
-      <span className="text-xl font-bold font-mono leading-none" style={{ color }}>
+    <div className="flex flex-col justify-center p-3 bg-[#111111] relative overflow-hidden">
+      <span className={`text-2xl font-bold font-mono leading-none ${color}`}>
         {temp !== null ? `${temp.toFixed(1)}°` : '--'}
       </span>
-      <span className="text-zinc-500 text-xs mt-0.5">Temp</span>
+      <span className="text-zinc-600 text-xs mt-1">Temp</span>
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-white/[0.04]">
+        <div className={`h-full ${barColor} transition-[width] duration-200 opacity-50`} style={{ width: `${pct}%` }} />
+      </div>
     </div>
   )
 }
@@ -636,7 +616,7 @@ export default function Dashboard() {
       <div className="max-w-5xl mx-auto w-full flex flex-col gap-3">
 
         {/* Header */}
-        <header className="flex items-center justify-between flex-shrink-0 py-4">
+        <header className="flex items-center justify-between flex-shrink-0 py-3">
           <div>
             <h1 className="text-xl font-bold leading-none">PiZoW Monitor</h1>
             <p className="text-zinc-500 text-xs mt-1">
@@ -679,7 +659,7 @@ export default function Dashboard() {
             { label: 'Disk',   value: `${data?.disk?.percent ?? '--'}%`,   color: 'text-orange-400' },
             { label: 'Viewers',value: String(data?.viewers ?? 0),          color: 'text-pink-400' },
           ].map(({ label, value, color }) => (
-            <div key={label} className="flex flex-col justify-center p-4 bg-[#111111]">
+            <div key={label} className="flex flex-col justify-center p-3 bg-[#111111]">
               <span className={`text-2xl font-bold font-mono leading-none ${color}`}>{value}</span>
               <span className="text-zinc-600 text-xs mt-1">{label}</span>
             </div>
