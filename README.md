@@ -33,8 +33,9 @@ PiZoW ships with built-in [Claude Code](https://claude.ai/code) skills — invok
 
 | Skill | Trigger | What it does |
 |---|---|---|
-| `pi-status` | `/pi-status` | SSH health snapshot — PM2 processes, CPU temp, memory, disk |
+| `pi-setup` | `/pi-setup` | First-time Pi setup — installs Node 22, PM2, Nginx, 1 GB swap over SSH |
 | `pi-deploy` | `/pi-deploy` | Build + rsync + restart PM2. Accepts `--local`, `--remote`, `--restart` |
+| `pi-status` | `/pi-status` | SSH health snapshot — PM2 processes, CPU temp, memory, disk |
 
 Skills live in `.claude/skills/` and are picked up automatically when you open the project in Claude Code.
 
@@ -325,28 +326,11 @@ Prints CPU temp, memory, disk, and uptime. Useful for quick SSH checks.
 
 A real-time Pi monitoring dashboard with auto-refresh, live TCP traffic, IP masking, and mobile support. Deploy it as your Pi's home page and always know what's running.
 
-**Dashboard features:**
-- Temperature, Memory %, CPU %, Disk %, and **active viewer count** at a glance
-- All running services: PM2 processes, open ports, systemd units, Node.js processes
-- System info: IP partially masked by default (hold to reveal), uptime, platform
-- CPU load averages (1m / 5m / 15m) and core count
-- RAM, Swap, and Disk usage with visual progress bars
-- **NAS card** — shows storage usage, free space, "Browse Files" button (only when mounted)
-- **Network sparkline** — rolling SVG chart of ↓ Download / ↑ Upload over a 2.5min window, updates every 5s. Shows current speed, peak in window, and a live activity indicator
-- Active viewer count tracked per browser session (TTL: 35s) — counts real browser tabs currently polling the dashboard
-- Equal-height layout — Active Services and system cards always align on desktop regardless of service count
-- Auto-refreshes every 5s (health) and 15s (services)
-- Mobile responsive
+> **Also running on [Readback](https://github.com/MKS-01/readback)** — a terminal read-later client built on the same Pi stack.
 
 ### Node.js API (`examples/node-api`)
 
-A minimal Express API with:
-- `GET /health` — health check endpoint
-- `GET /info` — system info
-- `POST /echo` — echo endpoint
-- Basic CRUD example routes
-
-Good starting point for building your own Pi backend.
+A minimal Express API — good starting point for building your own Pi backend.
 
 ---
 
