@@ -89,7 +89,7 @@ function ProgressBar({ percent, color = 'green' }: { percent: number; color?: st
   const barColor = percent > 80 ? colors.red : percent > 60 ? colors.yellow : colors[color]
 
   return (
-    <div className="w-full bg-zinc-800 rounded-full h-2 overflow-hidden">
+    <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
       <div
         className={`h-full rounded-full transition-[width] duration-200 ${barColor}`}
         style={{ width: `${Math.min(100, percent)}%` }}
@@ -101,7 +101,7 @@ function ProgressBar({ percent, color = 'green' }: { percent: number; color?: st
 
 function Metric({ label, value, unit, onMouseDown, onMouseUp, onMouseLeave, onTouchStart, onTouchEnd, clickable }: { label: string; value: string | number; unit?: string; onMouseDown?: () => void; onMouseUp?: () => void; onMouseLeave?: () => void; onTouchStart?: () => void; onTouchEnd?: () => void; clickable?: boolean }) {
   return (
-    <div className="flex justify-between items-center py-2 border-b border-zinc-800 last:border-0">
+    <div className="flex justify-between items-center py-2 border-b border-slate-800 last:border-0">
       <span className="text-zinc-500 text-xs">{label}</span>
       <span
         className={`font-mono text-xs text-zinc-300 ${clickable ? 'cursor-pointer select-none' : ''}`}
@@ -189,7 +189,7 @@ function ServiceRow({
   meta?: React.ReactNode
 }) {
   return (
-    <div className="flex items-center gap-3 py-2.5 px-3 rounded-lg bg-zinc-800/40 hover:bg-zinc-800/70 transition-colors">
+    <div className="flex items-center gap-3 py-2.5 px-3 rounded-lg bg-slate-800/40 hover:bg-slate-800/70 transition-colors">
       <div className="flex-shrink-0">{dot}</div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
@@ -218,12 +218,12 @@ function MetaChip({ label, value }: { label: string; value: string }) {
 function ActiveServicesCard({ services, loading, showPorts, onStartRevealPorts, onStopRevealPorts }: { services: ServicesData | null; loading: boolean; showPorts: boolean; onStartRevealPorts: () => void; onStopRevealPorts: () => void }) {
   if (loading && !services) {
     return (
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 h-full">
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 h-full">
         <h3 className="text-zinc-400 text-sm font-medium mb-4">Active Services</h3>
         <div className="space-y-2">
-          <div className="bg-zinc-800 animate-pulse rounded-lg h-10 w-full" />
-          <div className="bg-zinc-800 animate-pulse rounded-lg h-10 w-full" />
-          <div className="bg-zinc-800 animate-pulse rounded-lg h-10 w-3/4" />
+          <div className="bg-slate-800 animate-pulse rounded-lg h-10 w-full" />
+          <div className="bg-slate-800 animate-pulse rounded-lg h-10 w-full" />
+          <div className="bg-slate-800 animate-pulse rounded-lg h-10 w-3/4" />
         </div>
       </div>
     )
@@ -248,12 +248,12 @@ function ActiveServicesCard({ services, loading, showPorts, onStartRevealPorts, 
     (services?.systemd.length ?? 0) + dedupedNodeProcs.length
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex flex-col md:h-full md:max-h-[85vh]">
+    <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col md:h-full md:max-h-[85vh]">
       <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <h3 className="text-zinc-400 text-sm font-medium">Active Services</h3>
         <div className="flex items-center gap-2">
           {totalCount > 0 && (
-            <span className="text-xs bg-zinc-800 text-zinc-400 font-mono px-2 py-0.5 rounded-full">
+            <span className="text-xs bg-slate-800 text-zinc-400 font-mono px-2 py-0.5 rounded-full">
               {totalCount} running
             </span>
           )}
@@ -387,7 +387,7 @@ function TempGaugeCard({ temp }: { temp: number | null }) {
   const arcPath = `M ${startX} ${startY} A ${r} ${r} 0 1 1 ${endX} ${endY}`
 
   return (
-    <div className={`bg-zinc-900 border ${borderClass} rounded-xl p-3 flex flex-col items-center justify-center gap-0.5`}>
+    <div className={`bg-slate-900 border ${borderClass} rounded-xl p-3 flex flex-col items-center justify-center gap-0.5`}>
       <svg width={64} height={42} viewBox="0 0 80 65" aria-hidden="true">
         <path d={arcPath} fill="none" stroke="#27272a" strokeWidth={7} strokeLinecap="round" />
         <path
@@ -431,7 +431,7 @@ function Sparkline({ samples, keyName, color, w = 120, h = 32 }: {
   h?: number
 }) {
   const path = buildSparkPath(samples, keyName, w, h)
-  if (!path) return <div style={{ width: w, height: h }} className="bg-zinc-800/30 rounded" />
+  if (!path) return <div style={{ width: w, height: h }} className="bg-slate-800/30 rounded" />
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="overflow-visible">
       <defs>
@@ -473,7 +473,7 @@ function NetworkSparklineCard({ samples }: { samples: NetSample[] }) {
   const hasTraffic = rxBps > 500 || txBps > 500
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3">
+    <div className="bg-slate-900 border border-slate-800 rounded-xl p-3">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <p className="text-zinc-500 text-xs font-medium uppercase tracking-wide">Network Throughput</p>
@@ -487,7 +487,7 @@ function NetworkSparklineCard({ samples }: { samples: NetSample[] }) {
 
       <div className="grid grid-cols-2 gap-3">
         {/* Download */}
-        <div className="bg-zinc-800/40 rounded-lg p-3">
+        <div className="bg-slate-800/40 rounded-lg p-3">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5">
               <span className="text-green-400 text-sm">↓</span>
@@ -503,7 +503,7 @@ function NetworkSparklineCard({ samples }: { samples: NetSample[] }) {
         </div>
 
         {/* Upload */}
-        <div className="bg-zinc-800/40 rounded-lg p-3">
+        <div className="bg-slate-800/40 rounded-lg p-3">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5">
               <span className="text-blue-400 text-sm">↑</span>
@@ -626,14 +626,14 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-zinc-950 text-white p-6 flex items-center justify-center">
+      <main className="min-h-screen bg-slate-950 text-white p-6 flex items-center justify-center">
         <div className="text-zinc-400">Loading...</div>
       </main>
     )
   }
 
   return (
-    <main className="bg-zinc-950 text-white p-4 flex flex-col min-h-screen pb-20">
+    <main className="bg-slate-950 text-white p-4 flex flex-col min-h-screen pb-20">
       <div className="max-w-5xl mx-auto w-full flex flex-col gap-3">
 
         {/* Header */}
@@ -680,7 +680,7 @@ export default function Dashboard() {
             { label: 'Disk', value: `${data?.disk?.percent ?? '--'}%`, color: 'text-orange-400', border: 'border-orange-900/40' },
             { label: 'Viewers', value: data?.viewers ?? 0, color: 'text-pink-400', border: 'border-pink-900/40' },
           ].map(({ label, value, color, border }) => (
-            <div key={label} className={`bg-zinc-900 border ${border} rounded-xl p-4 flex items-center gap-3`}>
+            <div key={label} className={`bg-slate-900 border ${border} rounded-xl p-4 flex items-center gap-3`}>
               <span className={`text-2xl font-bold font-mono ${color}`}>{value}</span>
               <span className="text-zinc-500 text-sm">{label}</span>
             </div>
@@ -701,7 +701,7 @@ export default function Dashboard() {
           <div className="md:col-span-2 md:flex md:flex-col gap-3">
 
             {/* System + CPU */}
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
               <div className="grid grid-cols-2 gap-x-4">
                 <div>
                   <p className="text-zinc-500 text-xs font-medium uppercase tracking-wide mb-2">System</p>
@@ -725,7 +725,7 @@ export default function Dashboard() {
             </div>
 
             {/* Memory + Disk combined — grows to fill remaining height */}
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 md:flex-1">
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 md:flex-1">
               <p className="text-zinc-400 text-xs font-medium uppercase tracking-wide mb-3">Memory</p>
               <div className="mb-3">
                 <div className="flex justify-between text-xs mb-1">
@@ -744,7 +744,7 @@ export default function Dashboard() {
               <Metric label="Available" value={`${data?.memory?.available ?? '--'} MB`} />
 
               {/* Disk section inline */}
-              <div className="border-t border-zinc-800 mt-3 pt-3">
+              <div className="border-t border-slate-800 mt-3 pt-3">
                 <p className="text-zinc-400 text-xs font-medium uppercase tracking-wide mb-3">Disk</p>
                 <div className="mb-3">
                   <div className="flex justify-between text-xs mb-1">
@@ -758,13 +758,13 @@ export default function Dashboard() {
 
               {/* NAS section inline — always shown once data loads */}
               {data !== null && (
-                <div className="border-t border-zinc-800 mt-3 pt-3">
+                <div className="border-t border-slate-800 mt-3 pt-3">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <p className="text-zinc-400 text-xs font-medium uppercase tracking-wide">NAS</p>
                       {data.nas
                         ? <span className="text-xs bg-green-500/10 text-green-400 px-1.5 py-0.5 rounded font-mono">mounted</span>
-                        : <span className="text-xs bg-zinc-800 text-zinc-600 px-1.5 py-0.5 rounded font-mono">not mounted</span>
+                        : <span className="text-xs bg-slate-800 text-zinc-600 px-1.5 py-0.5 rounded font-mono">not mounted</span>
                       }
                     </div>
                     {data.nas && (
@@ -807,7 +807,7 @@ export default function Dashboard() {
       </div>
 
       {/* Footer — fixed to bottom */}
-      <footer className="fixed bottom-0 left-0 right-0 text-center py-2 bg-zinc-950/80 backdrop-blur-sm border-t border-zinc-900">
+      <footer className="fixed bottom-0 left-0 right-0 text-center py-2 bg-slate-950/80 backdrop-blur-sm border-t border-slate-900">
         <span className="text-zinc-600 text-xs inline-flex items-center gap-1.5">
           <span role="img" aria-label="alien">👽</span>
           <span><span className="text-zinc-500 font-medium">MKS</span> · Build with <span className="text-zinc-500 font-medium">Claude</span> · {new Date().getFullYear()}</span>
