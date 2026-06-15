@@ -27,6 +27,19 @@ The included **Next.js example** doubles as a fully functional **monitoring dash
 
 ---
 
+## Claude Code Skills
+
+PiZoW ships with built-in [Claude Code](https://claude.ai/code) skills — invoke them directly from your terminal without writing commands:
+
+| Skill | Trigger | What it does |
+|---|---|---|
+| `pi-status` | `/pi-status` | SSH health snapshot — PM2 processes, CPU temp, memory, disk |
+| `pi-deploy` | `/pi-deploy` | Build + rsync + restart PM2. Accepts `--local`, `--remote`, `--restart` |
+
+Skills live in `.claude/skills/` and are picked up automatically when you open the project in Claude Code.
+
+---
+
 ## Table of Contents
 
 - [Quick Start](#quick-start)
