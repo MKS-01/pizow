@@ -10,12 +10,7 @@
 ![Shell Script](https://img.shields.io/badge/Shell_Script-121011?style=for-the-badge&logo=gnu-bash&logoColor=white)
 ![Ubuntu](https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
 
-<table>
-  <tr>
-    <td><a href="screenshot/web-dashboard.png"><img src="screenshot/web-dashboard.png" height="280" alt="Desktop" /></a></td>
-    <td><a href="screenshot/mobile.jpg"><img src="screenshot/mobile.jpg" height="280" alt="Mobile" /></a></td>
-  </tr>
-</table>
+![PiZoW Dashboard](screenshot/web-dashboard.png)
 
 ---
 
@@ -83,13 +78,13 @@ ssh-copy-id YOUR_USERNAME@YOUR_PI_IP   # recommended — enables passwordless de
 On your Pi:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/YOUR_USERNAME/pizow/main/scripts/setup-pi.sh | bash
+curl -sSL https://raw.githubusercontent.com/MKS-01/pizow/main/scripts/setup-pi.sh | bash
 ```
 
 Or clone and run locally:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/pizow.git
+git clone https://github.com/MKS-01/pizow.git
 cd pizow
 ./scripts/setup-pi.sh
 ```
@@ -210,12 +205,6 @@ Uses `BUILD_DIR` from `.env` (defaults to `examples/nextjs`). Starts the app dir
 
 Turns your Pi into a NAS using any USB storage drive. After setup, File Browser runs at `http://PI_IP:8080` — accessible from any device on your network.
 
-<table>
-  <tr>
-    <td><a href="screenshot/mobile-nas.jpg"><img src="screenshot/mobile-nas.jpg" height="320" alt="File Browser Login" /></a></td>
-    <td><a href="screenshot/mobile-nas2.jpg"><img src="screenshot/mobile-nas2.jpg" height="320" alt="File Browser Menu" /></a></td>
-  </tr>
-</table>
 
 ```bash
 # Run from your Mac (auto-forwards to Pi via SSH)
