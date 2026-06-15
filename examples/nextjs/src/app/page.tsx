@@ -376,7 +376,7 @@ function TempGaugeCard({ temp }: { temp: number | null }) {
   const pct = temp !== null ? Math.max(0, Math.min(100, ((temp - 30) / 55) * 100)) : 0
 
   return (
-    <div className="flex flex-col justify-center p-3 bg-[#111111] relative overflow-hidden">
+    <div className="flex flex-col justify-center items-start p-3 bg-[#111111] relative overflow-hidden">
       <span className={`text-2xl font-bold font-mono leading-none ${color}`}>
         {temp !== null ? `${temp.toFixed(1)}°` : '--'}
       </span>
@@ -657,9 +657,9 @@ export default function Dashboard() {
             { label: 'Memory', value: `${data?.memory?.percent ?? '--'}%`, color: 'text-blue-400' },
             { label: 'CPU',    value: `${data?.cpu?.percent ?? '--'}%`,    color: 'text-purple-400' },
             { label: 'Disk',   value: `${data?.disk?.percent ?? '--'}%`,   color: 'text-orange-400' },
-            { label: 'Viewers',value: String(data?.viewers ?? 0),          color: 'text-pink-400' },
-          ].map(({ label, value, color }) => (
-            <div key={label} className="flex flex-col justify-center p-3 bg-[#111111]">
+            { label: 'Viewers',value: String(data?.viewers ?? 0),          color: 'text-pink-400', spanFull: true },
+          ].map(({ label, value, color, spanFull }) => (
+            <div key={label} className={`flex flex-col justify-center p-3 bg-[#111111] ${spanFull ? 'col-span-2 md:col-span-1 items-center md:items-start' : 'items-start'}`}>
               <span className={`text-2xl font-bold font-mono leading-none ${color}`}>{value}</span>
               <span className="text-zinc-600 text-xs mt-1">{label}</span>
             </div>
