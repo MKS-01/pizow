@@ -82,7 +82,8 @@ function ProgressBar({ percent, color = 'green' }: { percent: number; color?: st
     green: 'bg-green-500',
     yellow: 'bg-yellow-500',
     red: 'bg-red-500',
-    blue: 'bg-blue-500'
+    blue: 'bg-blue-500',
+    violet: 'bg-violet-500'
   }
 
   const barColor = percent > 80 ? colors.red : percent > 60 ? colors.yellow : colors[color]
@@ -136,9 +137,18 @@ function PulseDot({ color, breathe = false }: { color: string; breathe?: boolean
   )
 }
 
-function SectionLabel({ children, color }: { children: React.ReactNode; color: string }) {
+function SectionLabel({ children, color, onToggle, open = true }: { children: React.ReactNode; color: string; onToggle?: () => void; open?: boolean }) {
+  if (onToggle) {
+    return (
+      <button onClick={onToggle} className="flex items-center gap-2 mb-2 w-full text-left group">
+        <span className={`w-0.5 h-3 rounded-full ${color}`} />
+        <p className="text-xs text-zinc-500 uppercase tracking-wider font-semibold flex-1">{children}</p>
+        <span className="text-zinc-700 text-xs group-hover:text-zinc-500 transition-colors pr-1">{open ? '▾' : '▸'}</span>
+      </button>
+    )
+  }
   return (
-    <div className={`flex items-center gap-2 mb-2`}>
+    <div className="flex items-center gap-2 mb-2">
       <span className={`w-0.5 h-3 rounded-full ${color}`} />
       <p className="text-xs text-zinc-500 uppercase tracking-wider font-semibold">{children}</p>
     </div>
@@ -219,6 +229,9 @@ function ActiveServicesCard({ services, loading, showPorts, onStartRevealPorts, 
     )
   }
 
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  const toggle = (key: string) => setCollapsed(c => ({ ...c, [key]: !c[key] }))
+
   const portByPid = new Map<number, number>()
   for (const p of services?.ports ?? []) {
     if (p.pid) portByPid.set(p.pid, p.port)
@@ -261,8 +274,8 @@ function ActiveServicesCard({ services, loading, showPorts, onStartRevealPorts, 
         <div className="flex-1 space-y-5 overflow-y-auto">
           {services?.pm2Available && services.pm2.length > 0 && (
             <div>
-              <SectionLabel color="bg-violet-500">PM2 Processes</SectionLabel>
-              <div className="space-y-1.5 mt-2">
+              <SectionLabel color="bg-violet-500" onToggle={() => toggle('pm2')} open={!collapsed.pm2}>PM2 Processes</SectionLabel>
+              {!collapsed.pm2 && <div className="space-y-1.5 mt-2">
                 {services.pm2.map(p => {
                   const dotColor = p.status === 'online' ? 'bg-green-500' : p.status === 'errored' ? 'bg-red-500' : 'bg-yellow-500'
                   const matchedPort = p.pid ? portByPid.get(p.pid) : undefined
@@ -290,14 +303,14 @@ function ActiveServicesCard({ services, loading, showPorts, onStartRevealPorts, 
                     />
                   )
                 })}
-              </div>
+              </div>}
             </div>
           )}
 
           {unclaimedPorts.length > 0 && (
             <div>
-              <SectionLabel color="bg-cyan-500">Open Ports</SectionLabel>
-              <div className="space-y-1.5 mt-2">
+              <SectionLabel color="bg-cyan-500" onToggle={() => toggle('ports')} open={!collapsed.ports}>Open Ports</SectionLabel>
+              {!collapsed.ports && <div className="space-y-1.5 mt-2">
                 {unclaimedPorts.map(p => (
                   <ServiceRow
                     key={p.port}
@@ -307,14 +320,14 @@ function ActiveServicesCard({ services, loading, showPorts, onStartRevealPorts, 
                     meta={p.pid ? <MetaChip label="pid" value={String(p.pid)} /> : undefined}
                   />
                 ))}
-              </div>
+              </div>}
             </div>
           )}
 
           {services?.systemdAvailable && services.systemd.length > 0 && (
             <div>
-              <SectionLabel color="bg-emerald-500">Systemd</SectionLabel>
-              <div className="space-y-1.5 mt-2">
+              <SectionLabel color="bg-emerald-500" onToggle={() => toggle('systemd')} open={!collapsed.systemd}>Systemd</SectionLabel>
+              {!collapsed.systemd && <div className="space-y-1.5 mt-2">
                 {services.systemd.map(s => (
                   <ServiceRow
                     key={s.name}
@@ -327,14 +340,14 @@ function ActiveServicesCard({ services, loading, showPorts, onStartRevealPorts, 
                     }
                   />
                 ))}
-              </div>
+              </div>}
             </div>
           )}
 
           {dedupedNodeProcs.length > 0 && (
             <div>
-              <SectionLabel color="bg-blue-500">Node.js</SectionLabel>
-              <div className="space-y-1.5 mt-2">
+              <SectionLabel color="bg-blue-500" onToggle={() => toggle('node')} open={!collapsed.node}>Node.js</SectionLabel>
+              {!collapsed.node && <div className="space-y-1.5 mt-2">
                 {dedupedNodeProcs.map(p => (
                   <ServiceRow
                     key={p.pid}
@@ -348,7 +361,7 @@ function ActiveServicesCard({ services, loading, showPorts, onStartRevealPorts, 
                     }
                   />
                 ))}
-              </div>
+              </div>}
             </div>
           )}
         </div>
@@ -374,8 +387,8 @@ function TempGaugeCard({ temp }: { temp: number | null }) {
   const arcPath = `M ${startX} ${startY} A ${r} ${r} 0 1 1 ${endX} ${endY}`
 
   return (
-    <div className={`bg-zinc-900 border ${borderClass} rounded-xl p-3 flex items-center gap-2`}>
-      <svg width={60} height={60} viewBox="0 0 80 80" aria-hidden="true">
+    <div className={`bg-zinc-900 border ${borderClass} rounded-xl p-3 flex flex-col items-center justify-center gap-0.5`}>
+      <svg width={64} height={42} viewBox="0 0 80 65" aria-hidden="true">
         <path d={arcPath} fill="none" stroke="#27272a" strokeWidth={7} strokeLinecap="round" />
         <path
           d={arcPath}
@@ -387,11 +400,11 @@ function TempGaugeCard({ temp }: { temp: number | null }) {
           strokeDashoffset={offset}
           style={{ transition: 'stroke-dashoffset 0.2s ease, stroke 0.4s ease' }}
         />
-        <text x={cx} y={cy + 6} textAnchor="middle" fill={color} fontSize={15} fontWeight="bold" fontFamily="ui-monospace,monospace">
-          {temp !== null ? `${temp.toFixed(0)}°` : '--'}
-        </text>
       </svg>
-      <span className="text-zinc-500 text-sm">Temp</span>
+      <span className="text-xl font-bold font-mono leading-none" style={{ color }}>
+        {temp !== null ? `${temp.toFixed(1)}°` : '--'}
+      </span>
+      <span className="text-zinc-500 text-xs mt-0.5">Temp</span>
     </div>
   )
 }
@@ -509,6 +522,13 @@ function NetworkSparklineCard({ samples }: { samples: NetSample[] }) {
   )
 }
 
+function formatRelativeTime(date: Date, now: number): string {
+  const s = Math.floor((now - date.getTime()) / 1000)
+  if (s < 5) return 'just now'
+  if (s < 60) return `${s}s ago`
+  return date.toLocaleTimeString()
+}
+
 // Generate a stable session ID for this browser tab
 function getSessionId(): string {
   if (typeof window === 'undefined') return ''
@@ -530,6 +550,7 @@ export default function Dashboard() {
   const [showIp, setShowIp] = useState(false)
   const [showPorts, setShowPorts] = useState(false)
   const [netHistory, setNetHistory] = useState<NetSample[]>([])
+  const [now, setNow] = useState(() => Date.now())
 
   const startReveal = () => setShowIp(true)
   const stopReveal = () => setShowIp(false)
@@ -585,6 +606,11 @@ export default function Dashboard() {
     return () => clearInterval(interval)
   }, [])
 
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(interval)
+  }, [])
+
   const getOverallStatus = (): 'ok' | 'warning' | 'critical' => {
     if (!data) return 'ok'
     if (data.temperature && data.temperature > 80) return 'critical'
@@ -624,7 +650,16 @@ export default function Dashboard() {
               >
                 {showIp ? data?.system.ip : (data?.system.ip ? maskIp(data.system.ip) : '•••.•••.•••.•••')}
               </span>
-              {lastUpdate && <span className="ml-1">• {lastUpdate.toLocaleTimeString()}</span>}
+              {lastUpdate && (
+                <span className="ml-1 inline-flex items-center gap-1.5">
+                  •
+                  <span className="relative inline-flex w-1.5 h-1.5 flex-shrink-0">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 net-ping opacity-60" />
+                    <span className="relative inline-flex rounded-full w-1.5 h-1.5 bg-green-400" />
+                  </span>
+                  {formatRelativeTime(lastUpdate, now)}
+                </span>
+              )}
             </p>
           </div>
           <StatusBadge status={getOverallStatus()} />
@@ -704,7 +739,7 @@ export default function Dashboard() {
                   <span className="text-zinc-400">Swap</span>
                   <span className="font-mono">{data?.memory?.swap.used ?? '--'} / {data?.memory?.swap.total ?? '--'} MB</span>
                 </div>
-                <ProgressBar percent={data?.memory?.swap.percent ?? 0} color="blue" />
+                <ProgressBar percent={data?.memory?.swap.percent ?? 0} color="violet" />
               </div>
               <Metric label="Available" value={`${data?.memory?.available ?? '--'} MB`} />
 
@@ -721,31 +756,42 @@ export default function Dashboard() {
                 <Metric label="Free" value={data?.disk?.available ?? '--'} />
               </div>
 
-              {/* NAS section inline — only shown when mounted */}
-              {data?.nas && (
+              {/* NAS section inline — always shown once data loads */}
+              {data !== null && (
                 <div className="border-t border-zinc-800 mt-3 pt-3">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <p className="text-zinc-400 text-xs font-medium uppercase tracking-wide">NAS</p>
-                      <span className="text-xs bg-green-500/10 text-green-400 px-1.5 py-0.5 rounded font-mono">mounted</span>
+                      {data.nas
+                        ? <span className="text-xs bg-green-500/10 text-green-400 px-1.5 py-0.5 rounded font-mono">mounted</span>
+                        : <span className="text-xs bg-zinc-800 text-zinc-600 px-1.5 py-0.5 rounded font-mono">not mounted</span>
+                      }
                     </div>
-                    <a
-                      href={`http://${data.system.ip}:8080`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-cyan-400 hover:text-cyan-300 bg-cyan-500/10 hover:bg-cyan-500/20 px-2 py-1 rounded transition-colors font-medium"
-                    >
-                      Browse Files ↗
-                    </a>
+                    {data.nas && (
+                      <a
+                        href={`http://${data.system.ip}:8080`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-cyan-400 hover:text-cyan-300 bg-cyan-500/10 hover:bg-cyan-500/20 px-2 py-1 rounded transition-colors font-medium"
+                      >
+                        Browse Files ↗
+                      </a>
+                    )}
                   </div>
-                  <div className="mb-3">
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="text-zinc-400">Usage</span>
-                      <span className="font-mono">{data.nas.used} / {data.nas.total}</span>
-                    </div>
-                    <ProgressBar percent={data.nas.percent} color="blue" />
-                  </div>
-                  <Metric label="Free" value={data.nas.available} />
+                  {data.nas ? (
+                    <>
+                      <div className="mb-3">
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-zinc-400">Usage</span>
+                          <span className="font-mono">{data.nas.used} / {data.nas.total}</span>
+                        </div>
+                        <ProgressBar percent={data.nas.percent} color="blue" />
+                      </div>
+                      <Metric label="Free" value={data.nas.available} />
+                    </>
+                  ) : (
+                    <p className="text-zinc-700 text-xs font-mono">no drive at /mnt/nas</p>
+                  )}
                 </div>
               )}
             </div>
