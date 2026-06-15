@@ -3,6 +3,10 @@ import { promisify } from 'util'
 
 const execAsync = promisify(exec)
 
+let servicesCache: { data: ServicesData; ts: number } | null = null
+const CACHE_TTL_MS = 12_000
+const CACHE_HEADERS = { 'Cache-Control': 'max-age=12, stale-while-revalidate=3' }
+
 async function runCommand(cmd: string): Promise<string> {
   try {
     const { stdout } = await execAsync(cmd)
@@ -183,6 +187,10 @@ async function getNodeProcesses(): Promise<NodeProcess[]> {
 }
 
 export async function GET() {
+  if (servicesCache && Date.now() - servicesCache.ts < CACHE_TTL_MS) {
+    return Response.json(servicesCache.data, { headers: CACHE_HEADERS })
+  }
+
   try {
     const [pm2Result, systemdResult, nodeProcesses] = await Promise.all([
       getPm2Processes(),
@@ -190,7 +198,6 @@ export async function GET() {
       getNodeProcesses()
     ])
 
-    // Build pid→pm2Name map so ports can resolve project names
     const pm2ByPid = new Map<number, string>()
     for (const p of pm2Result.processes) {
       if (p.pid) pm2ByPid.set(p.pid, p.name)
@@ -208,7 +215,8 @@ export async function GET() {
       nodeProcesses
     }
 
-    return Response.json(data)
+    servicesCache = { data, ts: Date.now() }
+    return Response.json(data, { headers: CACHE_HEADERS })
   } catch {
     const empty: ServicesData = {
       timestamp: new Date().toISOString(),
