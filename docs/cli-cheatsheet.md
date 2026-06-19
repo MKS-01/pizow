@@ -16,6 +16,7 @@ Quick reference for SSH, Nmap, and Linux day-to-day commands.
 - [PM2](#pm2)
 - [Permissions](#permissions)
 - [Logs](#logs)
+- [Ubuntu / Linux Admin](#ubuntu--linux-admin)
 - [Miscellaneous](#miscellaneous)
 
 ---
@@ -316,6 +317,84 @@ dmesg | tail -50                              # kernel messages
 # Nginx
 tail -f /var/log/nginx/access.log
 tail -f /var/log/nginx/error.log
+```
+
+---
+
+## Ubuntu / Linux Admin
+
+```bash
+# System info
+lsb_release -a                                # distro details
+cat /etc/os-release                           # OS info
+uname -r                                      # kernel version
+hostnamectl                                   # hostname + OS + kernel
+arch                                          # architecture (aarch64, x86_64)
+
+# Users & groups
+whoami
+id                                            # uid, gid, groups
+sudo adduser username
+sudo usermod -aG sudo username                # grant sudo
+sudo deluser username
+passwd                                        # change own password
+last                                          # login history
+w                                             # who's logged in + what they're doing
+
+# Cron
+crontab -l                                    # list cron jobs
+crontab -e                                    # edit cron jobs
+# m h dom mon dow command
+# 0 3 * * * /home/mks/backup.sh              # daily at 3am
+sudo ls /etc/cron.d/                          # system cron jobs
+systemctl status cron                         # cron service status
+
+# Swap
+free -h                                       # memory + swap usage
+swapon --show                                 # active swap devices
+sudo fallocate -l 1G /swapfile                # create 1GB swapfile
+sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile
+
+# Kernel & modules
+lsmod                                         # loaded kernel modules
+modinfo module_name                           # module details
+dmesg | tail -30                              # recent kernel messages
+dmesg -T                                      # with human-readable timestamps
+
+# Hardware
+lscpu                                         # CPU info
+lsmem                                         # memory layout
+lsusb                                         # USB devices
+lspci                                         # PCI devices
+lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINT,LABEL   # detailed block devices
+sensors                                       # temps/voltages (lm-sensors)
+
+# Networking (Ubuntu)
+ip link set eth0 up / down                    # enable/disable interface
+nmcli dev status                              # NetworkManager devices
+nmcli con show                                # connections
+ss -s                                         # socket summary
+resolvectl status                             # DNS resolver info
+
+# Systemd timers (modern cron alternative)
+systemctl list-timers --all                   # all scheduled timers
+systemctl status myapp.timer
+
+# Snap (Ubuntu)
+snap list                                     # installed snaps
+sudo snap install package
+sudo snap remove package
+sudo snap refresh                             # update all snaps
+
+# Unattended upgrades
+sudo apt install unattended-upgrades
+sudo dpkg-reconfigure unattended-upgrades     # enable auto security updates
+cat /var/log/unattended-upgrades/unattended-upgrades.log
+
+# Boot & startup
+systemd-analyze                               # boot time
+systemd-analyze blame                         # slow services at boot
+systemctl list-unit-files --state=enabled     # what starts on boot
 ```
 
 ---
