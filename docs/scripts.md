@@ -93,31 +93,4 @@ See [NAS Setup →](nas.md)
 
 ## Architecture
 
-```
-Browser
-  │
-  ▼ HTTP/HTTPS
-┌────────────────────────────────────┐
-│        Raspberry Pi Zero W         │
-│                                    │
-│  Nginx (port 80/443)               │
-│  └─ Reverse proxy                  │
-│     │                              │
-│     ▼                              │
-│  PM2                               │
-│  └─ Process manager                │
-│     │  Auto-restart / boot         │
-│     ▼                              │
-│  Your Node.js App                  │
-│  (Next.js / Express / ...)         │
-│                                    │
-│  File Browser  (port 8080)         │
-│  └─ Web UI for NAS files           │
-│                                    │
-│  NAS Stats API (port 8081)         │
-│  └─ JSON endpoint for dashboard    │
-│                                    │
-│  /mnt/nas  ←──  USB storage        │
-│  └─ NFS export to local network    │
-└────────────────────────────────────┘
-```
+See the [deploy flowchart](../README.md#how-it-works) in the README for how these pieces connect.

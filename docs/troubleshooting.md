@@ -92,29 +92,4 @@ sudo systemctl start filebrowser
 
 ## Useful Commands
 
-### PM2
-
-```bash
-pm2 status                  # App status
-pm2 logs APP_NAME           # Live logs
-pm2 restart APP_NAME        # Restart
-pm2 monit                   # Real-time resource monitor
-```
-
-### System
-
-```bash
-htop                        # Process viewer
-free -h                     # Memory
-df -h                       # Disk
-vcgencmd measure_temp       # CPU temperature
-uptime                      # Uptime
-```
-
-### Nginx
-
-```bash
-sudo systemctl status nginx
-sudo nginx -t               # Test config
-sudo tail -f /var/log/nginx/error.log
-```
+For PM2, system, and Nginx commands, see the [CLI Cheatsheet](cli-cheatsheet.md).

@@ -107,33 +107,6 @@ Then open `http://YOUR_PI_IP` in any browser on your network.
 
 ---
 
-## Project Structure
-
-```
-pizow/
-├── scripts/
-│   ├── setup-pi.sh          # One-time Pi setup (Node, PM2, Nginx, swap)
-│   ├── setup-nas.sh         # NAS setup (ext4, NFS, File Browser, udev auto-remount)
-│   ├── reset-nas.sh         # Wipe all NAS components for a fresh setup
-│   ├── deploy.sh            # Deploy via local rsync or git pull
-│   ├── deploy-standalone.sh # Build locally + rsync prebuilt output
-│   ├── nginx-setup.sh       # Configure Nginx reverse proxy
-│   ├── health-check.sh      # Pi health check (CPU, mem, disk, temp)
-│   └── manage.sh            # List, stop, kill, remove deployed apps
-├── examples/
-│   ├── nextjs/              # Monitoring dashboard (Next.js 15 + Tailwind)
-│   └── node-api/            # Minimal Express API
-├── docs/
-│   ├── scripts.md           # Full scripts reference + architecture
-│   ├── nas.md               # NAS setup deep dive
-│   └── troubleshooting.md   # Troubleshooting + useful commands
-├── .claude/skills/          # Claude Code skills
-├── .env.example
-└── README.md
-```
-
----
-
 ## Requirements
 
 - Any Raspberry Pi — Zero W, Zero 2 W, 3, 4, 5 (built and tested on Pi Zero 2 W)
