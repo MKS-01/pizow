@@ -1,6 +1,8 @@
 # PiZoW
 
 > Turn your Raspberry Pi Zero W into a lightweight home server — with deployment scripts, process management, a real-time monitoring dashboard, and NAS storage via USB.
+>
+> Built and tuned for the Pi Zero 2 W's tight RAM/power budget, but every script works unmodified on any Raspberry Pi (3, 4, 5, etc.) — see [Requirements](#requirements).
 
 ![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-C51A4A?style=for-the-badge&logo=Raspberry-Pi&logoColor=white)
 ![Node](https://img.shields.io/badge/Node-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
@@ -18,7 +20,7 @@
 
 PiZoW is a collection of shell scripts and a ready-to-use Next.js dashboard that makes it dead simple to:
 
-- **Set up** a Raspberry Pi Zero W as a Node.js web server
+- **Set up** any Raspberry Pi (Zero W and up) as a Node.js web server
 - **Deploy** any Node.js app (Next.js, Express, Fastify, etc.) from your local machine
 - **Monitor** your Pi in real time — CPU, memory, disk, temp, network, and all running services
 - **Turn any USB drive into a NAS** — NFS share + File Browser web UI
