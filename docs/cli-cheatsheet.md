@@ -16,6 +16,7 @@ Quick reference for SSH, Nmap, and Linux day-to-day commands.
 - [PM2](#pm2)
 - [Permissions](#permissions)
 - [Logs](#logs)
+- [Docker](#docker)
 - [Ubuntu / Linux Admin](#ubuntu--linux-admin)
 - [Miscellaneous](#miscellaneous)
 
@@ -317,6 +318,76 @@ dmesg | tail -50                              # kernel messages
 # Nginx
 tail -f /var/log/nginx/access.log
 tail -f /var/log/nginx/error.log
+```
+
+---
+
+## Docker
+
+```bash
+# Images
+docker images                                 # list local images
+docker pull nginx:latest                      # pull image
+docker build -t myapp .                       # build from Dockerfile
+docker build -t myapp:v2 --no-cache .         # build without cache
+docker rmi image_name                         # remove image
+docker image prune -a                         # remove all unused images
+
+# Containers
+docker run -d --name myapp -p 3000:3000 myapp # run detached with port mapping
+docker run -it ubuntu bash                    # interactive shell
+docker run --rm -it alpine sh                 # disposable container
+docker run -d --restart unless-stopped myapp  # auto-restart on crash/reboot
+docker run -v /host/path:/container/path myapp # bind mount
+docker run --env-file .env myapp              # pass env file
+
+# Lifecycle
+docker ps                                     # running containers
+docker ps -a                                  # all containers (inc. stopped)
+docker stop myapp
+docker start myapp
+docker restart myapp
+docker rm myapp                               # remove stopped container
+docker rm -f myapp                            # force remove (even running)
+
+# Logs & debugging
+docker logs myapp                             # stdout/stderr
+docker logs -f myapp                          # follow logs
+docker logs --tail 100 myapp                  # last 100 lines
+docker exec -it myapp bash                    # shell into running container
+docker exec -it myapp sh                      # if bash not available
+docker inspect myapp                          # full container details
+docker stats                                  # live resource usage
+
+# Docker Compose
+docker compose up -d                          # start all services (detached)
+docker compose down                           # stop and remove containers
+docker compose down -v                        # also remove volumes
+docker compose build                          # rebuild images
+docker compose logs -f                        # follow all logs
+docker compose logs -f service_name           # follow one service
+docker compose ps                             # list services
+docker compose exec service_name bash         # shell into service
+docker compose pull                           # pull latest images
+docker compose up -d --force-recreate         # recreate even if unchanged
+
+# Volumes
+docker volume ls                              # list volumes
+docker volume create mydata
+docker volume inspect mydata
+docker volume rm mydata
+docker volume prune                           # remove unused volumes
+
+# Networks
+docker network ls
+docker network create mynet
+docker network inspect mynet
+docker network connect mynet myapp            # attach container to network
+
+# Cleanup
+docker system df                              # disk usage summary
+docker system prune                           # remove stopped containers, dangling images, unused networks
+docker system prune -a --volumes              # nuclear cleanup (careful!)
 ```
 
 ---

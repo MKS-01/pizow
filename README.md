@@ -27,6 +27,31 @@ PiZoW is a collection of shell scripts and a ready-to-use Next.js dashboard that
 
 ---
 
+## How It Works
+
+```mermaid
+flowchart LR
+    subgraph Local["Your Machine"]
+        A[deploy.sh]
+    end
+
+    subgraph Pi["Raspberry Pi"]
+        B[PM2] --> C[Node.js App]
+        D[Nginx :80] --> B
+        E[USB Drive] --> F[NAS: NFS + File Browser :8080]
+    end
+
+    A -- "--local: rsync build" --> B
+    A -- "--remote: git pull + build" --> B
+    A -- "--restart: pm2 restart" --> B
+    G[Browser] --> D
+    G -- ":8080" --> F
+```
+
+`deploy.sh` is the single entry point for getting code onto the Pi — it either ships a local build over rsync, tells the Pi to pull and build from git, or just restarts the running PM2 process. Nginx fronts the app on port 80; the NAS (if set up) runs independently on port 8080.
+
+---
+
 ## Claude Code Skills
 
 PiZoW ships with built-in [Claude Code](https://claude.ai/code) skills — invoke them directly from your terminal:
@@ -124,6 +149,7 @@ pizow/
 - [Scripts Reference](docs/scripts.md)
 - [NAS Setup](docs/nas.md)
 - [Troubleshooting & Commands](docs/troubleshooting.md)
+- [CLI Cheatsheet](docs/cli-cheatsheet.md) — SSH, Nmap, Docker, PM2, and Linux admin quick reference
 
 ---
 
